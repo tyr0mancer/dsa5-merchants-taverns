@@ -1,0 +1,44 @@
+{
+	"name": "dsa5-merchants",
+	"title": "DSA5 - Händler und Tavernen",
+	"description": "NPC können Items oder Dienstleistungen direkt an Spieler verkaufen",
+	"version": "0.0.3",
+	"minimumCoreVersion": "0.7.9",
+	"compatibleCoreVersion": "0.7.9",
+	"author": "tyr0mancer",
+	"systems": ["dsa5"],
+    "esmodules": ["/dsa5-merchants.js"],
+	"styles": ["/css/dsa5-merchants.css"],
+	"socket": true,
+	"packs": [
+		{
+		  "label": "Händler und Tavernen",
+		  "name": "actors",
+		  "entity": "Actor",
+		  "path": "packs/actors.db",
+		  "module": "dsa5-merchants"
+		},	
+		{
+		  "label": "Händler und Tavernen",
+		  "name": "items",
+		  "entity": "Item",
+		  "path": "packs/items.db",
+		  "module": "dsa5-merchants"
+		},  
+		{
+		  "label": "Händler und Tavernen",
+		  "name": "macro",
+		  "entity": "Macro",
+		  "path": "packs/macros.db",
+		  "module": "dsa5-merchants"
+		},
+		{
+		  "label": "Händler und Tavernen",
+		  "name": "rolltable",
+		  "entity": "RollTable",
+		  "path": "packs/rolltables.db",
+		  "module": "dsa5-merchants"
+		}
+	  ]
+	
+}
