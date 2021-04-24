@@ -1,0 +1,58 @@
+<form class="dsa5-merchants-taverns">
+    <div style="display: grid; grid-template-columns: 250px auto;">
+        <div>
+            <h2>GM SETTINGS</h2>
+            <label>
+                Qualität
+                <select>
+                    <option>---</option>
+                </select>
+            </label>
+            <label>
+                Preis
+                <select>
+                    <option>---</option>
+                </select>
+            </label>
+            <button name="update-inventory">update Inventory</button>
+            <button name="toggle-show-entry" data-entry-id="all" data-show="true">show everything</button>
+            <button name="toggle-show-entry" data-entry-id="all" data-show="false">hide everything</button>
+            <button name="toggle-show-entry" data-entry-id="all">toggle everything</button>
+        </div>
+        <div>
+            <h2>Menükarte</h2>
+            <section class="categories" >
+                {{#each tradeOffer}}
+                <h3>{{name}}</h3>
+                {{#each index}}
+                <div class="entry"  style="display: grid; grid-template-columns: auto 50px 100px;">
+                    <div>
+                        {{#if show}}
+                        <button disabled style="background-color: green">{{name}}</button>
+                        {{else}}
+                        <button name="toggle-show-entry" data-entry-id="{{_id}}" data-show="true">show {{name}}</button>
+                        {{/if}}
+                    </div>
+                    <div>{{price}}</div>
+                    <div>
+                        <button name="to-cart" data-entry-id="{{_id}}">add to Cart</button>
+                    </div>
+                </div>
+                {{/each}}
+                <!--index / item-->
+                <hr/>
+                {{/each}}
+                <!--tradeOffer / category-->
+            </section>
+
+            <h1>Total Price: {{totalPrice}}</h1>
+            <div style="display: grid; grid-template-columns: auto auto auto;">
+                <button name="checkout">checkout</button>
+                <button name="serve">serve</button>
+                <button name="clear">clear</button>
+            </div>
+            <p>{{stringify cart}}</p>
+        </div>
+    </div>
+
+</form>

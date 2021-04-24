@@ -1,44 +1,47 @@
 {
-	"name": "dsa5-merchants",
+	"name": "dsa5-merchants-taverns",
 	"title": "DSA5 - Händler und Tavernen",
-	"description": "NPC können Items oder Dienstleistungen direkt an Spieler verkaufen",
-	"version": "0.0.3",
-	"minimumCoreVersion": "0.7.9",
-	"compatibleCoreVersion": "0.7.9",
 	"author": "tyr0mancer",
-	"systems": ["dsa5"],
-    "esmodules": ["/dsa5-merchants.js"],
-	"styles": ["/css/dsa5-merchants.css"],
-	"socket": true,
+	"version": "0.1.0",
+	"minimumCoreVersion": "0.7.0",
+	"compatibleCoreVersion": "0.7.9",
+	"languages": [
+		{
+			"lang": "de",
+			"name": "Deutsch",
+			"path": "lang/de.json"
+		}
+	],
+	"esmodules": ["/dsa5-merchants.js"],
+	"styles": [
+		"/styles/dsa5-merchants.css"
+	],
 	"packs": [
 		{
-		  "label": "Händler und Tavernen",
-		  "name": "actors",
-		  "entity": "Actor",
-		  "path": "packs/actors.db",
-		  "module": "dsa5-merchants"
-		},	
-		{
-		  "label": "Händler und Tavernen",
-		  "name": "items",
-		  "entity": "Item",
-		  "path": "packs/items.db",
-		  "module": "dsa5-merchants"
-		},  
-		{
-		  "label": "Händler und Tavernen",
-		  "name": "macro",
-		  "entity": "Macro",
-		  "path": "packs/macros.db",
-		  "module": "dsa5-merchants"
+			"name": "items",
+			"label": "Speis und Trank",
+			"path": "packs/items.db",
+			"entity": "Item",
+			"module": "dsa5-merchants-taverns"
 		},
 		{
-		  "label": "Händler und Tavernen",
-		  "name": "rolltable",
-		  "entity": "RollTable",
-		  "path": "packs/rolltables.db",
-		  "module": "dsa5-merchants"
+			"name": "rolltables",
+			"label": "Warenangebot",
+			"path": "packs/rolltables.db",
+			"entity": "RollTable",
+			"module": "dsa5-merchants-taverns"
 		}
-	  ]
-	
+	],
+	"dependencies": [
+		{
+			"name": "dsa5",
+			"type": "system"
+		}
+	],
+	"url": "https://github.com/tyr0mancer/dsa5-merchants-taverns",
+	"manifest": "https://raw.githubusercontent.com/tyr0mancer/dsa5-merchants-taverns/master/module.json",
+	"download": "https://github.com/tyr0mancer/dsa5-merchants-taverns/archive/refs/tags/0.1.0.zip",
+	"bugs": "https://github.com/tyr0mancer/dsa5-merchants-taverns/issues",
+	"allowBugReporter": true
 }
+
