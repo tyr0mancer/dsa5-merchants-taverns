@@ -2,40 +2,81 @@
     <div style="display: grid; grid-template-columns: 250px auto;">
         <div>
             <h2>GM SETTINGS</h2>
+            <button name="update-inventory">update Inventory</button>
             <label>
                 Qualität
-                <select>
-                    <option>---</option>
+                <select name="quality">
+                    {{#select qualityOption}}
+                    {{#each qualityOptions}}
+                    <option value="{{key}}">{{name}}</option>
+                    {{/each}}
+                    {{/select}}
                 </select>
             </label>
-            <label>
-                Preis
-                <select>
-                    <option>---</option>
-                </select>
-            </label>
-            <button name="update-inventory">update Inventory</button>
+            <button name="lock-innkeeper">lock Innkeeper</button>
+            <button name="unlock-innkeeper">unlock Innkeeper</button>
             <button name="toggle-show-entry" data-entry-id="all" data-show="true">show everything</button>
             <button name="toggle-show-entry" data-entry-id="all" data-show="false">hide everything</button>
-            <button name="toggle-show-entry" data-entry-id="all">toggle everything</button>
+
+
+            {{#each roleTables as |category id|}}
+            <div>
+                <div>
+                    <label>Name:
+                        <input name="category-name" value="{{category.name}}" data-category-id="{{id}}"/></label>
+                </div>
+                <div>
+                    <label>Table
+                        <select name="category-rolltable" data-category-id="{{id}}">
+                            {{#select table}}
+                            <option>keine Waren</option>
+                            {{#each ../packTables}}
+                            <option value="{{_id}}">{{name}}</option>
+                            {{/each}}
+                            {{/select}}
+                        </select>
+                    </label>
+                </div>
+                <div>
+                    <h3>Anzahl</h3>
+                    {{#each ../qualityOptions}}
+                    <div>
+                        <label>
+                            {{name}}
+                            <input name="category-roll"
+                                   data-category-id="{{id}}"
+                                   data-quality-key="{{key}}"
+                                   value="{{lookup category.roll key}}"
+                                   placeholder="Wurf"/>
+                        </label>
+                    </div>
+                    {{/each}}
+                </div>
+                <button name="delete-category" data-category-id="{{id}}">delete</button>
+            </div>
+            <hr/>
+            {{/each}}
+            <button name="add-category">add</button>
+
         </div>
         <div>
             <h2>Menükarte</h2>
-            <section class="categories" >
+            <section class="categories">
                 {{#each tradeOffer}}
                 <h3>{{name}}</h3>
                 {{#each index}}
-                <div class="entry"  style="display: grid; grid-template-columns: auto 50px 100px;">
+                <div class="entry" style="display: grid; grid-template-columns: auto 100px 100px;">
                     <div>
                         {{#if show}}
                         <button disabled style="background-color: green">{{name}}</button>
                         {{else}}
-                        <button name="toggle-show-entry" data-entry-id="{{_id}}" data-show="true">show {{name}}</button>
+                        <button name="toggle-show-entry" data-entry-id="{{_id}}" data-show="true">{{name}} zeigen
+                        </button>
                         {{/if}}
                     </div>
-                    <div>{{price}}</div>
+                    <div>{{{money price}}}</div>
                     <div>
-                        <button name="to-cart" data-entry-id="{{_id}}">add to Cart</button>
+                        <button name="to-cart" data-entry-id="{{_id}}">bestellen</button>
                     </div>
                 </div>
                 {{/each}}
@@ -45,13 +86,61 @@
                 <!--tradeOffer / category-->
             </section>
 
-            <h1>Total Price: {{totalPrice}}</h1>
-            <div style="display: grid; grid-template-columns: auto auto auto;">
-                <button name="checkout">checkout</button>
-                <button name="serve">serve</button>
-                <button name="clear">clear</button>
+            <section class="bill">
+                <h1>Total Price: {{{money totalPrice}}}</h1>
+                {{#each cart}}
+                <p>{{name}}</p>
+                {{/each}}
+                <!--cart-->
+
+                <div style="display: grid; grid-template-columns: auto auto auto;">
+                    <button name="serve-and-bill">servieren und berechnen</button>
+                    <button name="bill-only">nur berechnen</button>
+                    <button name="clear">reset</button>
+                </div>
+
+                {{#each bill}}
+                <div>
+                    {{#each this}}
+                    <div style="display: grid; grid-template-columns: auto 100px;">
+                        <p>{{name}}</p>
+                        <p>{{{money price}}}</p>
+                    </div>
+                    {{/each}}
+                </div>
+                <hr/>
+                {{/each}}
+            </section>
+
+            <div style="display: grid; grid-template-columns: auto auto;">
+                <button name="charge-bill">Rechnung bitte!</button>
+                <button name="clear-bill">Storno</button>
             </div>
-            <p>{{stringify cart}}</p>
+
+            <section class="bill">
+                <h1>Total Price: {{{money finalTotalPrice}}}</h1>
+
+                {{#each finalBill}}
+                <div>
+                    {{#each this}}
+                    <div style="display: grid; grid-template-columns: auto 100px;">
+                        <p>{{name}}</p>
+                        <p>{{{money price}}}</p>
+                    </div>
+                    {{/each}}
+                </div>
+                <hr/>
+                {{/each}}
+
+                <div style="display: grid; grid-template-columns: auto auto;">
+                    <button name="checkout" data-payment="zusammen">Zusammen bitte!</button>
+                    <button name="checkout" data-payment="dutch">Aufteilen</button>
+                    <button name="checkout" data-payment="aufrunden-silber">Silber</button>
+                    <button name="checkout" data-payment="aufrunden-heller">Heller</button>
+                </div>
+            </section>
+
+
         </div>
     </div>
 

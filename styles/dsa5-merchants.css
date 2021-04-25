@@ -1,8 +1,12 @@
 form.dsa5-merchants-taverns section.categories div.entry {
     display: grid;
-    grid-template-columns: auto 55px;
+    grid-template-columns: auto 100px;
 }
 
 form.dsa5-merchants-taverns section.categories div.entry div.image img {
     width: 48px;
+}
+
+.nobr {
+    white-space: nowrap
 }

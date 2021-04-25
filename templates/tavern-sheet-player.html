@@ -6,7 +6,7 @@
         {{#if show}}
         <div class="entry">
             <div>{{name}}</div>
-            <div>{{price}}</div>
+            <div>{{{money price}}}</div>
         </div>
         {{/if}}
         <!--show-->
@@ -16,4 +16,23 @@
         {{/each}}
         <!--tradeOffer-->
     </section>
+
+    {{#if finalTotalPrice}}
+    <section class="bill">
+        <h1>Rechnung</h1>
+        {{#each finalBill}}
+        <div>
+            {{#each this}}
+            <div style="display: grid; grid-template-columns: auto 100px;">
+                <p>{{name}}</p>
+                <p>{{{money price}}}</p>
+            </div>
+            {{/each}}
+        </div>
+        <hr/>
+        {{/each}}
+        <h2>Macht zusammen {{{money finalTotalPrice}}}</h2>
+    </section>
+    {{/if}}
+
 </form>
