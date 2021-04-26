@@ -61,6 +61,15 @@
         </div>
         <div>
             <h2>Menükarte</h2>
+            <div>
+                <label>Name des Etablissements:
+                    <input name="establishment"
+                           value="{{establishment}}"
+                    />
+                </label>
+            </div>
+
+
             <section class="categories">
                 {{#each tradeOffer}}
                 <h3>{{name}}</h3>
@@ -76,7 +85,7 @@
                     </div>
                     <div>{{{money price}}}</div>
                     <div>
-                        <button name="to-cart" data-entry-id="{{_id}}">bestellen</button>
+                        <button name="take-order" data-entry-id="{{_id}}">bestellen</button>
                     </div>
                 </div>
                 {{/each}}
@@ -87,18 +96,23 @@
             </section>
 
             <section class="bill">
-                <h1>Total Price: {{{money totalPrice}}}</h1>
-                {{#each cart}}
+                {{#each currentOrder}}
                 <p>{{name}}</p>
                 {{/each}}
-                <!--cart-->
+                <!--currentOrder-->
+                <hr/>
+                <h2>Zwischensumme: {{{money subTotal}}}</h2>
 
                 <div style="display: grid; grid-template-columns: auto auto auto;">
-                    <button name="serve-and-bill">servieren und berechnen</button>
-                    <button name="bill-only">nur berechnen</button>
-                    <button name="clear">reset</button>
+                    <button name="show-order">Nur zeigen</button>
+                    <button name="serve-order">Servieren und auf Deckel</button>
+                    <button name="charge-order">Auf Deckel</button>
+                    <button name="sell-order">Jetzt verkaufen</button> <!--show in Chat with link to item / request payment-->
+                    <button name="clear-order">Zurücksetzen</button>
                 </div>
 
+                <hr/>
+                <h2>Aktueller Deckel</h2>
                 {{#each bill}}
                 <div>
                     {{#each this}}
@@ -110,34 +124,18 @@
                 </div>
                 <hr/>
                 {{/each}}
+                <h2>Macht insgesamt: {{{money orderTotal}}}</h2>
             </section>
-
-            <div style="display: grid; grid-template-columns: auto auto;">
-                <button name="charge-bill">Rechnung bitte!</button>
-                <button name="clear-bill">Storno</button>
-            </div>
+            <hr/>
 
             <section class="bill">
-                <h1>Total Price: {{{money finalTotalPrice}}}</h1>
-
-                {{#each finalBill}}
-                <div>
-                    {{#each this}}
-                    <div style="display: grid; grid-template-columns: auto 100px;">
-                        <p>{{name}}</p>
-                        <p>{{{money price}}}</p>
-                    </div>
-                    {{/each}}
+                <div style="display: grid; grid-template-columns: 150px auto auto auto">
+                    <h2>Geld einfordern</h2>
+                    <button name="checkout" data-payment="zusammen">zusammen</button>
+                    <button name="checkout" data-payment="dutch">getrennt</button>
+                    <button name="checkout" data-payment="per-round" disabled>pro Runde</button>
                 </div>
-                <hr/>
-                {{/each}}
-
-                <div style="display: grid; grid-template-columns: auto auto;">
-                    <button name="checkout" data-payment="zusammen">Zusammen bitte!</button>
-                    <button name="checkout" data-payment="dutch">Aufteilen</button>
-                    <button name="checkout" data-payment="aufrunden-silber">Silber</button>
-                    <button name="checkout" data-payment="aufrunden-heller">Heller</button>
-                </div>
+                <button name="clear-orders">Deckel weg werfen</button>
             </section>
 
 

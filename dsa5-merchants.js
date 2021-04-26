@@ -40,17 +40,19 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         super.activateListeners(html);
         html.find("button[name='update-inventory']").click(event => this._updateInventory(event, html));
         html.find("button[name='toggle-show-entry']").click(event => this._toggleShowEntry(event, html));
-        html.find("button[name='to-cart']").click(event => this._toCart(event, html));
-        html.find("button[name='serve-and-bill']").click(event => this._serve(event, html));
-        html.find("button[name='bill-only']").click(event => this._bill(event, html));
-        html.find("button[name='clear']").click(event => this._emptyCart(event, html));
+        html.find("button[name='take-order']").click(event => this._takeOrder(event, html));
+
+        html.find("button[name='clear-order']").click(event => this._clearOrder(event, html));
+        html.find("button[name='show-order']").click(event => this._showOrder(event, html));
+        html.find("button[name='serve-order']").click(event => this._serveOrder(event, html));
+        html.find("button[name='charge-order']").click(event => this._chargeOrder(event, html));
+        html.find("button[name='sell-order']").click(event => this._sellOrder(event, html));
+        html.find("button[name='clear-orders']").click(event => this._clearOrders(event, html));
+
         html.find("button[name='unlock-innkeeper']").click(event => this._unlockInnkeeper(event, html));
         html.find("button[name='lock-innkeeper']").click(event => this._lockInnkeeper(event, html));
 
-
         html.find("button[name='checkout']").click(event => this._checkout(event, html));
-        html.find("button[name='charge-bill']").click(event => this._chargeBill(event, html));
-        html.find("button[name='clear-bill']").click(event => this._clearBill(event, html));
 
 
         html.find("button[name='delete-category']").click(event => this._deleteCategory(event, html));
@@ -59,6 +61,10 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         html.find("input[name='category-roll']").change(event => this._changeCategory(event, 'roll'));
         html.find("select[name='category-rolltable']").change(event => this._changeCategory(event, 'table'));
         html.find("select[name='quality']").change(event => this._changeQuality(event));
+
+        html.find("input[name='establishment']").change(event => this._changeEstablishment(event));
+
+
     }
 
     playerViewEnabled() {
@@ -67,9 +73,9 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
     async getData() {
         this.tradeOffer = this.actor.getFlag(moduleName, 'trade-offer') || []
+        this.establishment = this.actor.getFlag(moduleName, 'establishment') || TavernSheetDSA5.getRandomEstablishmentName()
         this.roleTables = this.actor.getFlag(moduleName, 'roleTables') || []
-        this.finalBill = this.actor.getFlag(moduleName, 'bill') || []
-        this.finalTotalPrice = this.actor.getFlag(moduleName, 'total-price') || 0
+
         const qualityOption = this.actor.getFlag(moduleName, 'qualityOption') || 2
         const packTables = await game.packs.get(`dsa5-merchants-taverns.rolltables`).getContent()
 
@@ -78,13 +84,15 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             qualityOptions, qualityOption,
             packTables: packTables,
             permission: this.actor.data.permission.default,
-            tradeOffer: this.tradeOffer,
             roleTables: this.roleTables,
+
+            establishment: this.establishment,
+            tradeOffer: this.tradeOffer,
+            currentOrder: this.currentOrder,
+            subTotal: this.subTotal,
+            orderTotal: this.orderTotal,
+
             bill: this.bill,
-            cart: this.cart,
-            totalPrice: this.totalPrice,
-            finalBill: this.finalBill,
-            finalTotalPrice: this.finalTotalPrice
         })
         return data;
     }
@@ -106,7 +114,6 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     }
 
     async _updateInventory(event, html) {
-        console.clear()
         const packTables = await game.packs.get(`dsa5-merchants-taverns.rolltables`).getContent()
         const qualityOption = this.actor.getFlag(moduleName, 'qualityOption') || 'taverne'
         const quality = qualityOptions.find(q => q.key === qualityOption) || {price: 1}
@@ -122,9 +129,10 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
                 let itemDetail = await pack.getEntry(article.resultId)
                 if (!itemDetail)
                     index.push({
-                        _id: null,
+                        _id: article.resultId,
                         name: article.text,
                         img: article.img,
+                        description: null,
                         price: 0,
                         show: false
                     })
@@ -133,6 +141,8 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
                         _id: itemDetail._id,
                         name: itemDetail.name,
                         img: itemDetail.img,
+                        description: itemDetail.data.description?.value,
+                        collection: article.collection,
                         price: itemDetail.data.price.value * (quality.price),
                         show: false
                     })
@@ -145,101 +155,59 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         this.actor.setFlag(moduleName, 'trade-offer', tradeOffer)
     }
 
-    _toCart(event, html) {
+    _takeOrder(event, html) {
         const entryId = $(event.currentTarget).attr("data-entry-id")
-        if (!this.cart) this.cart = []
-        if (!this.totalPrice) this.totalPrice = 0
+        if (!this.currentOrder) this.currentOrder = []
+        if (!this.subTotal) this.subTotal = 0
 
         const entry = this._thisFindEntry(entryId)
         if (!entry) return
 
-        this.cart.push(entry)
-        this.totalPrice += entry.price
+        console.log(entry)
+
+        this.currentOrder.push(entry)
+        this.subTotal += entry.price
         this.render()
     }
 
-
-    _serve(event, html) {
-        let content = ``
-        for (let entry of this.cart)
-            content += `<img src="${entry.img}" style="width: 48px"/><h2>${entry.name}</h2>`
-        ChatMessage.create({content})
-        this._bill()
-        this.cart = []
-        this.render()
-    }
-
-    _bill(event, html) {
-        if (!this.bill)
-            this.bill = []
-        this.bill.push(this.cart)
-        this.cart = []
-        this.render()
-    }
 
     async _checkout(event, html) {
+        if (!this.orderTotal)
+            return
         const paymentType = $(event.currentTarget).attr("data-payment")
-        if (paymentType === 'zusammen') {
-            let moneyString = this.finalTotalPrice.toString()
-            let money = DSA5Payment._getPaymoney(moneyString)
-            if (money) {
-                let content = '<h3>Gesamtrechnung:</h3>'
-                content += `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">${game.i18n.localize("PAYMENT.payButton")}</button>`
-                const message = await ChatMessage.create({content})
-                console.log(message)
-            }
-            this.cart = []
-            this.totalPrice = 0
-        } else if (paymentType === 'dutch') {
-            let moneyString = (this.finalTotalPrice / 5).toString()
-            let money = DSA5Payment._getPaymoney(moneyString)
-            if (money) {
-                let content = '<h3>Macht dann pro Kopf:</h3>'
-                content += `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">${game.i18n.localize("PAYMENT.payButton")}</button>`
-                const message = await ChatMessage.create({content})
-                console.log(message)
-            }
-            this.cart = []
-            this.totalPrice = 0
-        } else if (paymentType === 'aufrunden-silber' || paymentType === 'aufrunden-heller') {
-
-            let price = 0
-            if (paymentType === 'aufrunden-silber')
-                price = Math.ceil(this.finalTotalPrice)
-            if (paymentType === 'aufrunden-heller')
-                price = Math.ceil(this.finalTotalPrice * 10) / 10
-
-            let moneyString = price.toString()
-            const tippPercentage = Math.floor((price - this.finalTotalPrice) / this.finalTotalPrice * 100)
-            let money = DSA5Payment._getPaymoney(moneyString)
-            if (money) {
-                let content = `<h3>Danke für ${tippPercentage}% Trinkgeld!</h3>`
-                content += `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">${game.i18n.localize("PAYMENT.payButton")}</button>`
-                const message = await ChatMessage.create({content})
-                console.log(message)
-            }
-            this.cart = []
-            this.totalPrice = 0
+        let content = `<h2>${this.actor.name} bringt euch die Rechnung:</h2>`
+        let paymentPrice = this.orderTotal
+        if (paymentType === 'dutch') {
+            //todo anzahl auswählbar
+            const playerCount = 3
+            paymentPrice = Math.ceil(this.orderTotal / playerCount * 100) / 100
+            content += `<h3>Macht dann pro Kopf (geteilt durch ${playerCount}):</h3>`
+        } else {
+            content += `<h3>Macht dann zusammen:</h3>`
         }
+
+
+        const paymentChatContent = (price, paymentPrice = null) => {
+            let money = DSA5Payment._getPaymoney(price.toString())
+            if (!money)
+                return
+            if (!paymentPrice)
+                return `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">Zeche bezahlen</button>`
+            let tip = Math.ceil((price - paymentPrice) / paymentPrice * 100)
+            return `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">${tip}% Trinkgeld</button>`
+        }
+
+        content += paymentChatContent(paymentPrice)
+        content += paymentChatContent(Math.ceil(paymentPrice / 10) * 10, paymentPrice)
+        content += paymentChatContent(Math.ceil(paymentPrice), paymentPrice)
+        content += paymentChatContent(Math.ceil(paymentPrice * 10) / 10, paymentPrice)
+
+        const message = await ChatMessage.create({
+            speaker: {alias: this.establishment},
+            content
+        })
         this.render()
     }
-
-    async _chargeBill() {
-        this.actor.setFlag(moduleName, 'bill', this.bill || [])
-        this.actor.setFlag(moduleName, 'total-price', this.totalPrice || 0)
-
-        this.bill = []
-        this.cart = []
-        this.totalPrice = 0
-    }
-
-    async _clearBill() {
-        this.bill = []
-        this.cart = []
-        this.totalPrice = 0
-        this.render()
-    }
-
 
     _toggleShowEntry(event, html) {
         const entryId = $(event.currentTarget).attr("data-entry-id")
@@ -267,10 +235,19 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         return null
     }
 
-    _emptyCart(event, html) {
-        this.cart = []
-        this.totalPrice = 0
+    _clearOrder(event, html) {
+        this.currentOrder = []
+        this.subTotal = 0
         this.render()
+    }
+
+    //todo wrap up flag setter / getter
+    _changeQuality(event) {
+        this.actor.setFlag(moduleName, 'qualityOption', $(event.currentTarget)[0].value)
+    }
+
+    _changeEstablishment(event) {
+        this.actor.setFlag(moduleName, 'qualityOption', $(event.currentTarget)[0].value)
     }
 
     _deleteCategory(event, html) {
@@ -297,9 +274,6 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         this.actor.setFlag(moduleName, 'roleTables', this.roleTables)
     }
 
-    _changeQuality(event) {
-        this.actor.setFlag(moduleName, 'qualityOption', $(event.currentTarget)[0].value)
-    }
 
     _unlockInnkeeper(event) {
         const perms = this.actor.data.permission
@@ -312,6 +286,83 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         perms.default = 0
         this.actor.update({permission: perms})
     }
+
+    _showOrder(event, html) {
+        let content = `<h2>${this.actor.name} zeigt euch:</h2>`
+        for (let entry of this.currentOrder)
+            content += `<p><img src="${entry.img}" style="width: 48px; margin-right: 10px"/><b>${entry.name}</b></p><p>${entry.description}</p>`
+        ChatMessage.create({
+            speaker: {
+                alias: this.establishment
+            },
+            content
+        })
+    }
+
+    _serveOrder(event, html) {
+        let content = `<h2>${this.actor.name} bringt euch:</h2>`
+        for (let entry of this.currentOrder) {
+            content += `<p><img src="${entry.img}" style="width: 48px; margin-right: 10px"/><b>${entry.name}</b></p>`
+            if (entry.description && entry.description !== null)
+                content += `<p>${entry.description}</p>`
+        }
+        ChatMessage.create({
+            speaker: {
+                alias: this.establishment
+            },
+            content
+        })
+        this._chargeOrder()
+        this.currentOrder = []
+        this.subTotal = 0
+        this.render()
+    }
+
+    _chargeOrder(event, html) {
+        if (!this.bill)
+            this.bill = []
+        if (!this.orderTotal)
+            this.orderTotal = 0
+
+        this.bill.push(this.currentOrder)
+        this.orderTotal += this.subTotal
+
+        this.currentOrder = []
+        this.subTotal = 0
+        this.render()
+    }
+
+    async _sellOrder(event, html) {
+        let money = DSA5Payment._getPaymoney(this.subTotal.toString())
+        if (!money)
+            return
+
+        let content = `<h2>Danke für Euren Einkauf!</h2>`
+        for (let entry of this.currentOrder) {
+            console.log(entry)
+            content += `@Compendium[${entry.collection}.${entry._id}]{${entry.name}}`
+        }
+
+        content += `<p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">${game.i18n.localize("PAYMENT.payButton")}</button>`
+        await ChatMessage.create({content})
+
+        this.currentOrder = []
+        this.subTotal = 0
+        this.render()
+    }
+
+    async _clearOrders() {
+        this.bill = []
+        this.orderTotal = 0
+        this.currentOrder = []
+        this.subTotal = 0
+        this.render()
+    }
+
+    static getRandomEstablishmentName() {
+        return "Zum tropfenden Hahn";
+    }
+
 }
 
 

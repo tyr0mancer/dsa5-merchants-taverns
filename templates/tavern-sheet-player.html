@@ -1,7 +1,12 @@
 <form class="dsa5-merchants-taverns">
+
+    <h1>{{establishment}}</h1>
+    <h3>Menükarte</h3>
+    <hr/>
     <section class="categories">
+
         {{#each tradeOffer}}
-        <h1>{{name}}</h1>
+        <h2>{{name}}</h2>
         {{#each index}}
         {{#if show}}
         <div class="entry">
