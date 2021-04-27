@@ -69,6 +69,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
 
         html.find("input[name='establishment']").change(event => this._changeEstablishment(event));
+        html.find("input[name='is-tavern']").change(event => this._changeIsTavern(event));
 
 
     }
@@ -79,6 +80,9 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
     async getData() {
         if (!this.buyersCount) this.buyersCount = 3
+        this.isTavern = this.actor.getFlag(moduleName, 'is-tavern')
+        if (this.isTavern === undefined)
+            this.isTavern = true
         this.tradeOffer = this.actor.getFlag(moduleName, 'trade-offer') || []
         this.establishment = this.actor.getFlag(moduleName, 'establishment') || TavernSheetDSA5.getRandomEstablishmentName()
         this.roleTables = this.actor.getFlag(moduleName, 'roleTables') || []
@@ -112,7 +116,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             rolltableOptions: this.rolltableOptions,
             locked: (this.actor.data.permission.default !== 1),
             roleTables: this.roleTables,
-
+            isTavern: this.isTavern,
             establishment: this.establishment,
             tradeOffer: this.tradeOffer,
             tradeOfferPlayer: this.tradeOffer.filter(o => o.index.find(e => e.show)),
@@ -186,7 +190,6 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
                 index
             })
         }
-        console.log(tradeOffer)
         this.actor.setFlag(moduleName, 'trade-offer', tradeOffer)
     }
 
@@ -428,6 +431,10 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     _refreshName(event, html) {
         let name = TavernSheetDSA5.getRandomEstablishmentName()
         this.actor.setFlag(moduleName, 'establishment', name)
+    }
+
+    async _changeIsTavern(event) {
+        this.actor.setFlag(moduleName, 'is-tavern', event.currentTarget.checked)
     }
 }
 

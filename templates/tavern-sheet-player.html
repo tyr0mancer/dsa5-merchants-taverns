@@ -1,7 +1,9 @@
 <form class="dsa5-merchants-taverns">
 
     <h3 style="font-size: 1.2em; font-weight: bold">{{establishment}}</h3>
+    {{#if isTavern}}
     <h1>Menükarte</h1>
+    {{/if}}
     <section class="categories">
 
         {{#each tradeOfferPlayer}}

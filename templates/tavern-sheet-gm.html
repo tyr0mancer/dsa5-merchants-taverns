@@ -58,15 +58,20 @@
                 <h1><a name="toggle-show-entry" data-entry-id="all" data-show="false"><i
                         class="far fa-eye-slash"></i></a></h1>
             </div>
-            <div style="display: grid; grid-template-columns: auto 100px 100px;">
-                <label><b>Name des Etablissements:
-                    <input style="font-size: 1.5em"
-                           name="establishment"
-                           value="{{establishment}}"
-                    />
-                    <a name="refresh-name"><i class="fas fa-sync"></i> neu würfeln</a>
-                </b>
-                </label>
+            <div style="display: grid; grid-template-columns: auto 100px 100px 100px;">
+                <div>
+                    <label><b>Name des Etablissements:
+                        <input style="font-size: 1.5em"
+                               name="establishment"
+                               value="{{establishment}}"
+                        />
+                        <a name="refresh-name"><i class="fas fa-sync"></i> neu würfeln</a>
+                    </b>
+                    </label>
+                </div>
+                <div>
+                    <label>Taverne: <input name="is-tavern" {{#if isTavern}}checked="checked"{{/if}} type="checkbox"/> </label>
+                </div>
                 <div>
                     <select name="quality" style="width: 95px">
                         {{#select qualityOption}}
@@ -92,7 +97,8 @@
                     </button>
                     <button name="unlock-innkeeper" style="background-color: lightgreen">jetzt freigeben</button>
                     {{else}}
-                    <button disabled style="background-color: green; color: black; font-weight: bold">Sicht frei</button>
+                    <button disabled style="background-color: green; color: black; font-weight: bold">Sicht frei
+                    </button>
                     <button name="lock-innkeeper" style="background-color: salmon">jetzt sperren</button>
                     {{/if}}
                 </div>
