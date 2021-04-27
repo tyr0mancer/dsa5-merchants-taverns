@@ -139,6 +139,8 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         for (let table of this.roleTables) {
             let index = []
             const [packName, tableId] = table.table.split(':')
+            if (!packName)
+                continue
             let packTables = await game.packs.get(packName).getContent()
             let rolltable = packTables.find(t => t._id === tableId)
             const amount = await rollAmount(table.roll[qualityOption])
@@ -325,8 +327,11 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
     _showOrder(event, html) {
         let content = `<h2>${this.actor.name} zeigt euch:</h2>`
-        for (let entry of this.currentOrder)
-            content += `<p><img src="${entry.img}" style="width: 48px; margin-right: 10px"/><b>${entry.name}</b></p><p>${entry.description}</p>`
+        for (let entry of this.currentOrder) {
+            content += `<p><img src="${entry.img}" style="width: 48px; margin-right: 10px"/><b>${entry.name}</b></p>`
+            if (entry.description && entry.description !== null)
+                content += `<p>${entry.description}</p>`
+        }
         ChatMessage.create({
             speaker: {
                 alias: this.establishment

@@ -1,59 +1,53 @@
 <form class="dsa5-merchants-taverns">
     <div style="display: grid; grid-template-columns: 250px auto 250px;">
 
-        <!--GM SETTINGS-->
         <div>
-            <h1>GM SETTINGS</h1>
-            <label>
-                Qualität
-                <select name="quality">
-                    {{#select qualityOption}}
-                    <option>-- auswählen</option>
-                    {{#each qualityOptions}}
-                    <option value="{{key}}">{{name}}</option>
-                    {{/each}}
-                    {{/select}}
-                </select>
-            </label>
+            <h1>Rolltables</h1>
+            <button name="add-category">Rolltable hinzufügen</button>
 
             {{#each roleTables as |category id|}}
-            <div>
-                <div>
-                    <label>{{id}} Name:
-                        <input name="category-name" value="{{category.name}}" data-category-id="{{id}}"/></label>
-                </div>
-                <div>
-                    <label>Table {{table}}
-                        <select name="category-rolltable" data-category-id="{{id}}">
-                            {{#select table}}
-                            <option>keine Waren</option>
-                            {{#each ../rolltableOptions}}
-                            <option value="{{packName}}:{{_id}}">{{name}}</option>
-                            {{/each}}
-                            {{/select}}
-                        </select>
-                    </label>
-                </div>
-                <div>
-                    <h3>Anzahl</h3>
-                    {{#each ../qualityOptions}}
-                    <div>
-                        <label>
-                            {{name}}
-                            <input name="category-roll"
-                                   data-category-id="{{id}}"
-                                   data-quality-key="{{key}}"
-                                   value="{{lookup category.roll key}}"
-                                   placeholder="Wurf"/>
-                        </label>
-                    </div>
-                    {{/each}}
-                </div>
-                <button name="delete-category" data-category-id="{{id}}">delete</button>
-            </div>
             <hr/>
+            <div>
+                <div style="display: grid; grid-template-columns: auto 180px">
+                    <h3>Name:</h3>
+                    <input name="category-name" value="{{category.name}}" data-category-id="{{id}}"/>
+
+                    <h3>RollTable</h3>
+                    <select name="category-rolltable" data-category-id="{{id}}" style="width: 175px">
+                        {{#select table}}
+                        <option></option>
+                        {{#each ../rolltableOptions}}
+                        <option value="{{packName}}:{{_id}}">{{name}}</option>
+                        {{/each}}
+                        {{/select}}
+                    </select>
+
+                    <h3>Anzahl</h3>
+                    <table>
+                        <tr>
+                            {{#each ../qualityOptions}}
+                            <td><input name="category-roll"
+                                       data-category-id="{{id}}"
+                                       data-quality-key="{{key}}"
+                                       value="{{lookup category.roll key}}"
+                                       placeholder="Wurf" style="width: 36px"/></td>
+                            {{/each}}
+                        </tr>
+                        <tr>
+                            <td style="text-align: center">Q1</td>
+                            <td style="text-align: center">Q2</td>
+                            <td style="text-align: center">Q3</td>
+                            <td style="text-align: center">Q4</td>
+                            <td style="text-align: center">Q5</td>
+                        </tr>
+                    </table>
+
+                    <div></div>
+                    <button name="delete-category" data-category-id="{{id}}">Rolltable löschen</button>
+                </div>
+
+            </div>
             {{/each}}
-            <button name="add-category">add</button>
         </div>
 
 
@@ -64,7 +58,7 @@
                 <h1><a name="toggle-show-entry" data-entry-id="all" data-show="false"><i
                         class="far fa-eye-slash"></i></a></h1>
             </div>
-            <div style="display: grid; grid-template-columns: auto 100px;">
+            <div style="display: grid; grid-template-columns: auto 100px 100px;">
                 <label><b>Name des Etablissements:
                     <input style="font-size: 1.5em"
                            name="establishment"
@@ -73,8 +67,19 @@
                     <a name="refresh-name"><i class="fas fa-sync"></i> neu würfeln</a>
                 </b>
                 </label>
+                <label>
+                    <select name="quality" style="width: 95px">
+                        {{#select qualityOption}}
+                        <option>-- auswählen</option>
+                        {{#each qualityOptions}}
+                        <option value="{{key}}">{{name}}</option>
+                        {{/each}}
+                        {{/select}}
+                    </select>
+                </label>
+
                 {{#if locked}}
-                <button name="unlock-innkeeper"  style="background-color: red">Sicht freigeben</button>
+                <button name="unlock-innkeeper" style="background-color: red">Sicht freigeben</button>
                 {{else}}
                 <button name="lock-innkeeper" style="background-color: green">Sicht sperren</button>
                 {{/if}}
@@ -109,7 +114,7 @@
             </section>
 
             <section class="bill">
-                <h2>Aktuelle Bestellung <a name="clear-order">(zurücksetzen)</a></h2>
+                <h2>Aktuelle Bestellung <a name="clear-order">(<i class="fas fa-trash-alt"></i> zurücksetzen)</a></h2>
                 {{#each currentOrder}}
                 <p>{{name}}</p>
                 {{/each}}
