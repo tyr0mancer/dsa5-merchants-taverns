@@ -1,47 +1,33 @@
 {
-	"name": "dsa5-merchants-taverns",
-	"title": "DSA5 - Händler und Tavernen",
-	"author": "tyr0mancer",
-	"version": "0.3.0",
-	"minimumCoreVersion": "0.7.0",
-	"compatibleCoreVersion": "0.7.9",
-	"languages": [
-		{
-			"lang": "de",
-			"name": "Deutsch",
-			"path": "lang/de.json"
-		}
-	],
-	"esmodules": ["/dsa5-merchants.js"],
-	"styles": [
-		"/styles/dsa5-merchants.css"
-	],
-	"packs": [
-		{
-			"name": "items",
-			"label": "Speis und Trank",
-			"path": "packs/items.db",
-			"entity": "Item",
-			"module": "dsa5-merchants-taverns"
-		},
-		{
-			"name": "rolltables",
-			"label": "Warenangebot",
-			"path": "packs/rolltables.db",
-			"entity": "RollTable",
-			"module": "dsa5-merchants-taverns"
-		}
-	],
-	"dependencies": [
-		{
-			"name": "dsa5",
-			"type": "system"
-		}
-	],
-	"url": "https://github.com/tyr0mancer/dsa5-merchants-taverns",
-	"manifest": "https://raw.githubusercontent.com/tyr0mancer/dsa5-merchants-taverns/master/module.json",
-	"download": "https://github.com/tyr0mancer/dsa5-merchants-taverns/archive/refs/tags/0.3.0.zip",
-	"bugs": "https://github.com/tyr0mancer/dsa5-merchants-taverns/issues",
-	"allowBugReporter": true
+  "name": "dsa5-merchants-taverns",
+  "title": "DSA5 - Händler und Tavernen",
+  "author": "tyr0mancer",
+  "version": "0.3.0",
+  "minimumCoreVersion": "0.7.0",
+  "compatibleCoreVersion": "0.7.9",
+  "languages": [
+    {
+      "lang": "de",
+      "name": "Deutsch",
+      "path": "lang/de.json"
+    }
+  ],
+  "esmodules": [
+    "/dsa5-merchants.js"
+  ],
+  "styles": [
+    "/styles/dsa5-merchants.css"
+  ],
+  "dependencies": [
+    {
+      "name": "dsa5",
+      "type": "system"
+    }
+  ],
+  "url": "https://github.com/tyr0mancer/dsa5-merchants-taverns",
+  "manifest": "https://raw.githubusercontent.com/tyr0mancer/dsa5-merchants-taverns/master/module.json",
+  "download": "https://github.com/tyr0mancer/dsa5-merchants-taverns/archive/refs/tags/0.3.0.zip",
+  "bugs": "https://github.com/tyr0mancer/dsa5-merchants-taverns/issues",
+  "allowBugReporter": true
 }
 
