@@ -3,6 +3,16 @@ import ActorSheetdsa5NPC from "../../systems/dsa5/modules/actor/npc-sheet.js";
 
 const moduleName = "dsa5-merchants-taverns";
 
+const tmpConst = [{
+    "roll": {"spelunke": "1d3", "taverne": "1d8", "herberge": "1d6"},
+    "name": "Biere",
+    "table": "UUMgDoOfjtkuyK1h"
+}, {
+    "table": "gn8yXorNgNylhkKv",
+    "name": "Backwaren",
+    "roll": {"spelunke": "0", "taverne": "1d3", "herberge": "1d6"}
+}]
+
 const qualityOptions = [
     {key: 'spelunke', name: "Spelunke", price: 0.75},
     {key: 'taverne', name: "Taverne", price: 1},
@@ -75,14 +85,31 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         this.tradeOffer = this.actor.getFlag(moduleName, 'trade-offer') || []
         this.establishment = this.actor.getFlag(moduleName, 'establishment') || TavernSheetDSA5.getRandomEstablishmentName()
         this.roleTables = this.actor.getFlag(moduleName, 'roleTables') || []
+        //this.actor.setFlag(moduleName, 'roleTables', tmpConst)
 
-        const qualityOption = this.actor.getFlag(moduleName, 'qualityOption') || 2
-        const packTables = await game.packs.get(`dsa5-merchants-taverns.rolltables`).getContent()
+
+        this.qualityOption = this.actor.getFlag(moduleName, 'qualityOption') || 2
+        if (!this.rolltableOptions) {
+            this.rolltableOptions = []
+            console.clear()
+            for (let pack of game.packs) {
+                if (pack.metadata.entity !== 'RollTable')
+                    continue
+                const packName = pack.metadata.package + '.' + pack.metadata.name
+                console.log(packName)
+
+                const content = await pack.getContent()
+                this.rolltableOptions = this.rolltableOptions.concat(content)
+            }
+            this.rolltableOptions = this.rolltableOptions.concat(game.tables.entities)
+        }
+
 
         const data = super.getData();
         mergeObject(data, {
-            qualityOptions, qualityOption,
-            packTables: packTables,
+            qualityOptions,
+            qualityOption: this.qualityOption,
+            rolltableOptions: this.rolltableOptions,
             permission: this.actor.data.permission.default,
             roleTables: this.roleTables,
 
@@ -252,26 +279,36 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
     _deleteCategory(event, html) {
         const categoryId = $(event.currentTarget).attr("data-category-id")
-        this.roleTables.splice(categoryId, 1)
-        this.actor.setFlag(moduleName, 'roleTables', this.roleTables)
-    }
-
-    _addCategory(event, html) {
-        this.roleTables.push({})
-        this.actor.setFlag(moduleName, 'roleTables', this.roleTables)
+        let roleTables = duplicate(this.roleTables);
+        roleTables.splice(categoryId, 1)
+        this.actor.setFlag(moduleName, 'roleTables', roleTables)
+        this.roleTables = roleTables
         this.render()
     }
 
-    _changeCategory(event, key) {
+    _addCategory(event, html) {
+        let roleTables = duplicate(this.roleTables);
+        roleTables.push({})
+        this.actor.setFlag(moduleName, 'roleTables', roleTables)
+        this.roleTables = roleTables
+        this.render()
+    }
+
+    async _changeCategory(event, key) {
+        let roleTables = duplicate(this.roleTables);
+
         if (key === 'roll') {
+            if (!roleTables[$(event.currentTarget).attr("data-category-id")][key] || Array.isArray(roleTables[$(event.currentTarget).attr("data-category-id")][key]))
+                roleTables[$(event.currentTarget).attr("data-category-id")][key] = {}
+            roleTables[$(event.currentTarget).attr("data-category-id")][key][$(event.currentTarget).attr("data-quality-key")] = $(event.currentTarget)[0].value
 
-            if (!this.roleTables[$(event.currentTarget).attr("data-category-id")][key] || Array.isArray(this.roleTables[$(event.currentTarget).attr("data-category-id")][key]))
-                this.roleTables[$(event.currentTarget).attr("data-category-id")][key] = {}
-            this.roleTables[$(event.currentTarget).attr("data-category-id")][key][$(event.currentTarget).attr("data-quality-key")] = $(event.currentTarget)[0].value
+        } else {
+            roleTables[$(event.currentTarget).attr("data-category-id")][key] = $(event.currentTarget)[0].value
 
-        } else
-            this.roleTables[$(event.currentTarget).attr("data-category-id")][key] = $(event.currentTarget)[0].value
-        this.actor.setFlag(moduleName, 'roleTables', this.roleTables)
+        }
+        this.actor.setFlag(moduleName, 'roleTables', roleTables)
+        this.roleTables = roleTables
+        this.render()
     }
 
 
