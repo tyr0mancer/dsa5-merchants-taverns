@@ -101,7 +101,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             qualityOptions,
             qualityOption: this.qualityOption,
             rolltableOptions: this.rolltableOptions,
-            permission: this.actor.data.permission.default,
+            locked: (this.actor.data.permission.default !== 1),
             roleTables: this.roleTables,
 
             establishment: this.establishment,
@@ -174,6 +174,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
                 index
             })
         }
+        console.log(tradeOffer)
         this.actor.setFlag(moduleName, 'trade-offer', tradeOffer)
     }
 
@@ -392,6 +393,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     }
 
     static getRandomEstablishmentName() {
+        //todo move this into rolltable or at least extend
         const options = ["Zum tropfenden Hahn", "Kein Schlachthaus", "Der treue Ferdinand"]
         return options[Math.floor(Math.random() * options.length)];
     }
