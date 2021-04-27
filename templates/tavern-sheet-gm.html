@@ -31,7 +31,7 @@
                             {{#select table}}
                             <option>keine Waren</option>
                             {{#each ../rolltableOptions}}
-                            <option value="{{_id}}">{{name}}</option>
+                            <option value="{{packName}}:{{_id}}">{{name}}</option>
                             {{/each}}
                             {{/select}}
                         </select>

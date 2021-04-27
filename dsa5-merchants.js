@@ -85,23 +85,17 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         this.tradeOffer = this.actor.getFlag(moduleName, 'trade-offer') || []
         this.establishment = this.actor.getFlag(moduleName, 'establishment') || TavernSheetDSA5.getRandomEstablishmentName()
         this.roleTables = this.actor.getFlag(moduleName, 'roleTables') || []
-        //this.actor.setFlag(moduleName, 'roleTables', tmpConst)
-
-
         this.qualityOption = this.actor.getFlag(moduleName, 'qualityOption') || 2
         if (!this.rolltableOptions) {
             this.rolltableOptions = []
-            console.clear()
             for (let pack of game.packs) {
                 if (pack.metadata.entity !== 'RollTable')
                     continue
                 const packName = pack.metadata.package + '.' + pack.metadata.name
-                console.log(packName)
-
                 const content = await pack.getContent()
-                this.rolltableOptions = this.rolltableOptions.concat(content)
+                for (let tableOption of content)
+                    this.rolltableOptions.push({_id: tableOption._id, packName: packName, name: tableOption.data.name})
             }
-            this.rolltableOptions = this.rolltableOptions.concat(game.tables.entities)
         }
 
 
@@ -141,19 +135,22 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     }
 
     async _updateInventory(event, html) {
-        const packTables = await game.packs.get(`dsa5-merchants-taverns.rolltables`).getContent()
         const qualityOption = this.actor.getFlag(moduleName, 'qualityOption') || 'taverne'
         const quality = qualityOptions.find(q => q.key === qualityOption) || {price: 1}
-
         let tradeOffer = []
         for (let table of this.roleTables) {
             let index = []
-            const rolltable = packTables.find(t => t._id === table.table)
+            const [packName, tableId] = table.table.split(':')
+            let packTables = await game.packs.get(packName).getContent()
+            let rolltable = packTables.find(t => t._id === tableId)
             const amount = await rollAmount(table.roll[qualityOption])
             const results = await drawManyWithoutReplacement(rolltable, amount)
             for (let article of results) {
-                let pack = game.packs.get(article.collection)
-                let itemDetail = await pack.getEntry(article.resultId)
+                let itemDetail
+                if (article.collection) {
+                    let pack = game.packs.get(article.collection)
+                    itemDetail = await pack.getEntry(article.resultId)
+                }
                 if (!itemDetail)
                     index.push({
                         _id: article.resultId,
@@ -288,7 +285,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
     _addCategory(event, html) {
         let roleTables = duplicate(this.roleTables);
-        roleTables.push({})
+        roleTables.push({roll: {}, name: 'neu'})
         this.actor.setFlag(moduleName, 'roleTables', roleTables)
         this.roleTables = roleTables
         this.render()
@@ -301,11 +298,14 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             if (!roleTables[$(event.currentTarget).attr("data-category-id")][key] || Array.isArray(roleTables[$(event.currentTarget).attr("data-category-id")][key]))
                 roleTables[$(event.currentTarget).attr("data-category-id")][key] = {}
             roleTables[$(event.currentTarget).attr("data-category-id")][key][$(event.currentTarget).attr("data-quality-key")] = $(event.currentTarget)[0].value
-
+            /*
+                    } else if (key === 'table') {
+                        roleTables[$(event.currentTarget).attr("data-category-id")][key] = $(event.currentTarget)[0].value
+            */
         } else {
             roleTables[$(event.currentTarget).attr("data-category-id")][key] = $(event.currentTarget)[0].value
-
         }
+
         this.actor.setFlag(moduleName, 'roleTables', roleTables)
         this.roleTables = roleTables
         this.render()
