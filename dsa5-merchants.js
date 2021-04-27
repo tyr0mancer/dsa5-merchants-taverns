@@ -323,16 +323,26 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     }
 
 
-    _unlockInnkeeper(event) {
+    async _unlockInnkeeper(event) {
+        console.clear()
+        console.log(this.actor.data.permission)
         const perms = this.actor.data.permission
         perms.default = 1
-        this.actor.update({permission: perms})
+        const result = await this.actor.update({permission: perms})
+        console.log(result)
+        console.log(this.actor.data.permission)
+        //this.render()
     }
 
-    _lockInnkeeper(event) {
+    async _lockInnkeeper(event) {
+        console.clear()
+        console.log(this.actor.data.permission)
         const perms = this.actor.data.permission
         perms.default = 0
-        this.actor.update({permission: perms})
+        const result = await this.actor.update({permission: perms})
+        console.log(result)
+        console.log(this.actor.data.permission)
+        //this.render()
     }
 
     _showOrder(event, html) {

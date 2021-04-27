@@ -67,7 +67,7 @@
                     <a name="refresh-name"><i class="fas fa-sync"></i> neu würfeln</a>
                 </b>
                 </label>
-                <label>
+                <div>
                     <select name="quality" style="width: 95px">
                         {{#select qualityOption}}
                         <option>-- auswählen</option>
@@ -76,13 +76,26 @@
                         {{/each}}
                         {{/select}}
                     </select>
-                </label>
+                    <select name="quality" style="width: 95px">
+                        {{#select qualityOption}}
+                        <option>-- auswählen</option>
+                        {{#each qualityOptions}}
+                        <option value="{{key}}">{{name}}</option>
+                        {{/each}}
+                        {{/select}}
+                    </select>
+                </div>
 
-                {{#if locked}}
-                <button name="unlock-innkeeper" style="background-color: red">Sicht freigeben</button>
-                {{else}}
-                <button name="lock-innkeeper" style="background-color: green">Sicht sperren</button>
-                {{/if}}
+                <div>
+                    {{#if locked}}
+                    <button disabled style="background-color: red; color: white; font-weight: bold">Sicht gesperrt
+                    </button>
+                    <button name="unlock-innkeeper" style="background-color: lightgreen">jetzt freigeben</button>
+                    {{else}}
+                    <button disabled style="background-color: green; color: black; font-weight: bold">Sicht frei</button>
+                    <button name="lock-innkeeper" style="background-color: salmon">jetzt sperren</button>
+                    {{/if}}
+                </div>
             </div>
 
 
