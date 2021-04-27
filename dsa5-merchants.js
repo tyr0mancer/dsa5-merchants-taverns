@@ -33,8 +33,8 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         const options = super.defaultOptions;
         mergeObject(options, {
             classes: options.classes.concat(["dsa5", "actor", "npc-sheet", "merchant-sheet"]),
-            width: (game.user.isGM) ? 800 : 400,
-            height: 700,
+            width: (game.user.isGM) ? 1600 : 400,
+            height:(game.user.isGM) ? 1000 : 700,
         });
         return options;
     }
