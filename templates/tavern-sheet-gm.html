@@ -4,7 +4,6 @@
         <!--GM SETTINGS-->
         <div>
             <h1>GM SETTINGS</h1>
-            <button name="update-inventory">update Inventory</button>
             <label>
                 Qualität
                 <select name="quality">
@@ -63,13 +62,17 @@
 
 
         <div style="padding: 0px 20px">
-            <h1>Menükarte</h1>
+            <h1>Menükarte <a name="update-inventory">(<i class="fas fa-sync"></i> aktualisieren)</a></h1>
             <div>
-                <label>Name des Etablissements:
-                    <input name="establishment"
+                <label><b>Name des Etablissements:
+                    <input style="font-size: 1.5em"
+                           name="establishment"
                            value="{{establishment}}"
                     />
+                    <a name="refresh-name"><i class="fas fa-sync"></i> neu würfeln</a>
+                </b>
                 </label>
+
             </div>
 
 
@@ -122,7 +125,7 @@
         </div>
 
         <div>
-            <h1>Aktueller Deckel</h1>
+            <h1>Aktueller Deckel <a name="clear-orders"><i class="fas fa-trash-alt"></i></a></h1>
             {{#if orderTotal}}
             {{#each bill}}
             <div>
@@ -155,8 +158,6 @@
             </div>
 
             <button name="checkout" data-payment="per-round" disabled>Runden einzeln berechnen</button>
-            <button name="clear-orders">Deckel weg werfen</button>
-
             {{/if}}
         </div>
 

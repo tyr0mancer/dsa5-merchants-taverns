@@ -3,16 +3,6 @@ import ActorSheetdsa5NPC from "../../systems/dsa5/modules/actor/npc-sheet.js";
 
 const moduleName = "dsa5-merchants-taverns";
 
-const tmpConst = [{
-    "roll": {"spelunke": "1d3", "taverne": "1d8", "herberge": "1d6"},
-    "name": "Biere",
-    "table": "UUMgDoOfjtkuyK1h"
-}, {
-    "table": "gn8yXorNgNylhkKv",
-    "name": "Backwaren",
-    "roll": {"spelunke": "0", "taverne": "1d3", "herberge": "1d6"}
-}]
-
 const qualityOptions = [
     {key: 'spelunke', name: "Spelunke", price: 0.75},
     {key: 'taverne', name: "Taverne", price: 1},
@@ -48,17 +38,20 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
     activateListeners(html) {
         super.activateListeners(html);
-        html.find("button[name='update-inventory']").click(event => this._updateInventory(event, html));
+        html.find("a[name='update-inventory']").click(event => this._updateInventory(event, html));
         html.find("button[name='toggle-show-entry']").click(event => this._toggleShowEntry(event, html));
         html.find("a[name='toggle-show-entry']").click(event => this._toggleShowEntry(event, html));
         html.find("button[name='take-order']").click(event => this._takeOrder(event, html));
+
+        html.find("a[name='refresh-name']").click(event => this._refreshName(event, html));
+
 
         html.find("a[name='clear-order']").click(event => this._clearOrder(event, html));
         html.find("button[name='show-order']").click(event => this._showOrder(event, html));
         html.find("button[name='serve-order']").click(event => this._serveOrder(event, html));
         html.find("button[name='charge-order']").click(event => this._chargeOrder(event, html));
         html.find("button[name='sell-order']").click(event => this._sellOrder(event, html));
-        html.find("button[name='clear-orders']").click(event => this._clearOrders(event, html));
+        html.find("a[name='clear-orders']").click(event => this._clearOrders(event, html));
 
         html.find("button[name='unlock-innkeeper']").click(event => this._unlockInnkeeper(event, html));
         html.find("button[name='lock-innkeeper']").click(event => this._lockInnkeeper(event, html));
@@ -276,7 +269,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     }
 
     _changeEstablishment(event) {
-        this.actor.setFlag(moduleName, 'qualityOption', $(event.currentTarget)[0].value)
+        this.actor.setFlag(moduleName, 'establishment', $(event.currentTarget)[0].value)
     }
 
     _deleteCategory(event, html) {
@@ -399,9 +392,14 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     }
 
     static getRandomEstablishmentName() {
-        return "Zum tropfenden Hahn";
+        const options = ["Zum tropfenden Hahn", "Kein Schlachthaus", "Der treue Ferdinand"]
+        return options[Math.floor(Math.random() * options.length)];
     }
 
+    _refreshName(event, html) {
+        let name = TavernSheetDSA5.getRandomEstablishmentName()
+        this.actor.setFlag(moduleName, 'establishment', name)
+    }
 }
 
 
