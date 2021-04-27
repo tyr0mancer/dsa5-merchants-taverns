@@ -93,9 +93,13 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
                 for (let tableOption of content)
                     this.rolltableOptions.push({_id: tableOption._id, packName: packName, name: tableOption.data.name})
             }
-            this.rolltableOptions = this.rolltableOptions.sort(function(a, b){
-                if(a.name < b.name) { return -1; }
-                if(a.name > b.name) { return 1; }
+            this.rolltableOptions = this.rolltableOptions.sort(function (a, b) {
+                if (a.name < b.name) {
+                    return -1;
+                }
+                if (a.name > b.name) {
+                    return 1;
+                }
                 return 0;
             })
         }
@@ -111,6 +115,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
             establishment: this.establishment,
             tradeOffer: this.tradeOffer,
+            tradeOfferPlayer: this.tradeOffer.filter(o => o.index.find(e => e.show)),
             currentOrder: this.currentOrder,
             subTotal: this.subTotal,
             orderTotal: this.orderTotal,
