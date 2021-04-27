@@ -93,8 +93,12 @@
                 <div class="entry" style="display: grid; grid-template-columns: auto 100px 100px;">
                     <div>
                         {{#if show}}
-                        <h3>{{name}}</h3>
-                        <div>{{{description}}}</div>
+                        <h3>{{name}}
+                            {{#if description}}
+                            <a onclick="$('div.description.{{_id}}').toggle();"><i class="fas fa-info-circle"></i></a>
+                            {{/if}}
+                        </h3>
+                        <div class="description {{_id}}">{{{description}}}</div>
                         {{else}}
                         <h3 style="background-color: lightgray"><a name="toggle-show-entry" data-entry-id="{{_id}}"
                                                                    data-show="true"> <i>Spielern

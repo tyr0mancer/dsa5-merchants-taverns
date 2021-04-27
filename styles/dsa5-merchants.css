@@ -15,3 +15,7 @@ form.dsa5-merchants-taverns section.categories div.entry div.image img {
 .entry:hover{
     background-color: lightblue;
 }
+
+.description {
+    display: none;
+}
