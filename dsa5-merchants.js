@@ -165,9 +165,9 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
                         _id: itemDetail._id,
                         name: itemDetail.name,
                         img: itemDetail.img,
-                        description: itemDetail.data.description?.value,
+                        description: itemDetail.data?.description?.value,
                         collection: article.collection,
-                        price: itemDetail.data.price.value * (quality.price),
+                        price: itemDetail.data?.price.value * (quality.price),
                         show: false
                     })
             }
@@ -186,9 +186,6 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
         const entry = this._thisFindEntry(entryId)
         if (!entry) return
-
-        console.log(entry)
-
         this.currentOrder.push(entry)
         this.subTotal += entry.price
         this.render()
@@ -376,7 +373,6 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
         let content = `<h2>Danke für Euren Einkauf!</h2>`
         for (let entry of this.currentOrder) {
-            console.log(entry)
             content += `@Compendium[${entry.collection}.${entry._id}]{${entry.name}}`
         }
 
