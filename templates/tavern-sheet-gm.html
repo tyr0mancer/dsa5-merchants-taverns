@@ -1,7 +1,9 @@
 <form class="dsa5-merchants-taverns">
-    <div style="display: grid; grid-template-columns: 250px auto;">
+    <div style="display: grid; grid-template-columns: 250px auto 250px;">
+
+        <!--GM SETTINGS-->
         <div>
-            <h2>GM SETTINGS</h2>
+            <h1>GM SETTINGS</h1>
             <button name="update-inventory">update Inventory</button>
             <label>
                 Qualität
@@ -57,10 +59,11 @@
             <hr/>
             {{/each}}
             <button name="add-category">add</button>
-
         </div>
-        <div>
-            <h2>Menükarte</h2>
+
+
+        <div style="padding: 0px 20px">
+            <h1>Menükarte</h1>
             <div>
                 <label>Name des Etablissements:
                     <input name="establishment"
@@ -72,20 +75,22 @@
 
             <section class="categories">
                 {{#each tradeOffer}}
-                <h3>{{name}}</h3>
+                <h2>{{name}}</h2>
                 {{#each index}}
                 <div class="entry" style="display: grid; grid-template-columns: auto 100px 100px;">
                     <div>
                         {{#if show}}
-                        <button disabled style="background-color: green">{{name}}</button>
+                        <h3>{{name}}</h3>
+                        <div>{{{description}}}</div>
                         {{else}}
-                        <button name="toggle-show-entry" data-entry-id="{{_id}}" data-show="true">{{name}} zeigen
-                        </button>
+                        <h3 style="background-color: lightgray"><a name="toggle-show-entry" data-entry-id="{{_id}}"
+                                                                   data-show="true"> <i>Spielern
+                            zeigen</i></a> {{name}}</h3>
                         {{/if}}
                     </div>
                     <div>{{{money price}}}</div>
                     <div>
-                        <button name="take-order" data-entry-id="{{_id}}">bestellen</button>
+                        <button name="take-order" data-entry-id="{{_id}}"><i class="fas fa-cart-plus"></i></button>
                     </div>
                 </div>
                 {{/each}}
@@ -96,50 +101,63 @@
             </section>
 
             <section class="bill">
+                <h2>Aktuelle Bestellung <a name="clear-order">(zurücksetzen)</a></h2>
                 {{#each currentOrder}}
                 <p>{{name}}</p>
                 {{/each}}
                 <!--currentOrder-->
                 <hr/>
-                <h2>Zwischensumme: {{{money subTotal}}}</h2>
 
-                <div style="display: grid; grid-template-columns: auto auto auto;">
-                    <button name="show-order">Nur zeigen</button>
-                    <button name="serve-order">Servieren und auf Deckel</button>
-                    <button name="charge-order">Auf Deckel</button>
-                    <button name="sell-order">Jetzt verkaufen</button> <!--show in Chat with link to item / request payment-->
-                    <button name="clear-order">Zurücksetzen</button>
+                <h3><b>Zwischensumme: {{{money subTotal}}}</b></h3>
+
+                <div style="width: 200px; align-content: center; float: right">
+                    <button name="show-order"><i class="fas fa-eye"></i> Nur zeigen</button>
+                    <button name="serve-order"><i class="fas fa-concierge-bell"></i> Servieren und auf Deckel</button>
+                    <button name="charge-order"><i class="fas fa-file-signature"></i> Auf Deckel</button>
+                    <button name="sell-order"><i class="fas fa-coins"></i> Jetzt verkaufen</button>
                 </div>
 
-                <hr/>
-                <h2>Aktueller Deckel</h2>
-                {{#each bill}}
-                <div>
-                    {{#each this}}
-                    <div style="display: grid; grid-template-columns: auto 100px;">
-                        <p>{{name}}</p>
-                        <p>{{{money price}}}</p>
-                    </div>
-                    {{/each}}
-                </div>
-                <hr/>
-                {{/each}}
-                <h2>Macht insgesamt: {{{money orderTotal}}}</h2>
             </section>
-            <hr/>
-
-            <section class="bill">
-                <div style="display: grid; grid-template-columns: 150px auto auto auto">
-                    <h2>Geld einfordern</h2>
-                    <button name="checkout" data-payment="zusammen">zusammen</button>
-                    <button name="checkout" data-payment="dutch">getrennt</button>
-                    <button name="checkout" data-payment="per-round" disabled>pro Runde</button>
-                </div>
-                <button name="clear-orders">Deckel weg werfen</button>
-            </section>
-
 
         </div>
-    </div>
+
+        <div>
+            <h1>Aktueller Deckel</h1>
+            {{#if orderTotal}}
+            {{#each bill}}
+            <div>
+                {{#each this}}
+                <div style="display: grid; grid-template-columns: auto 100px;">
+                    <p>{{name}}</p>
+                    <p>{{{money price}}}</p>
+                </div>
+                {{/each}}
+            </div>
+            <hr/>
+            {{/each}}
+            <div style="display: grid; grid-template-columns: auto 100px;">
+                <h3>insgesamt</h3>
+                <p>{{{money orderTotal}}}</p>
+            </div>
+            <hr/>
+
+            <button name="checkout" data-payment="zusammen"><i class="fas fa-coins"></i> zusammen berechnen</button>
+            <div style="display: grid; grid-template-columns: auto auto">
+                <select name="buyers">
+                    {{#select buyersCount}}
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    {{/select}}
+                </select>
+                <button name="checkout" data-payment="dutch"><i class="fas fa-coins"></i> getrennt berechnen</button>
+            </div>
+
+            <button name="checkout" data-payment="per-round" disabled>Runden einzeln berechnen</button>
+            <button name="clear-orders">Deckel weg werfen</button>
+
+            {{/if}}
+        </div>
 
 </form>

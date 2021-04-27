@@ -34,7 +34,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         mergeObject(options, {
             classes: options.classes.concat(["dsa5", "actor", "npc-sheet", "merchant-sheet"]),
             width: (game.user.isGM) ? 1600 : 400,
-            height:(game.user.isGM) ? 1000 : 700,
+            height: (game.user.isGM) ? 1000 : 700,
         });
         return options;
     }
@@ -50,9 +50,10 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         super.activateListeners(html);
         html.find("button[name='update-inventory']").click(event => this._updateInventory(event, html));
         html.find("button[name='toggle-show-entry']").click(event => this._toggleShowEntry(event, html));
+        html.find("a[name='toggle-show-entry']").click(event => this._toggleShowEntry(event, html));
         html.find("button[name='take-order']").click(event => this._takeOrder(event, html));
 
-        html.find("button[name='clear-order']").click(event => this._clearOrder(event, html));
+        html.find("a[name='clear-order']").click(event => this._clearOrder(event, html));
         html.find("button[name='show-order']").click(event => this._showOrder(event, html));
         html.find("button[name='serve-order']").click(event => this._serveOrder(event, html));
         html.find("button[name='charge-order']").click(event => this._chargeOrder(event, html));
@@ -71,6 +72,8 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         html.find("input[name='category-roll']").change(event => this._changeCategory(event, 'roll'));
         html.find("select[name='category-rolltable']").change(event => this._changeCategory(event, 'table'));
         html.find("select[name='quality']").change(event => this._changeQuality(event));
+        html.find("select[name='buyers']").change(event => this._changeBuyers(event));
+
 
         html.find("input[name='establishment']").change(event => this._changeEstablishment(event));
 
@@ -82,6 +85,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     }
 
     async getData() {
+        if (!this.buyersCount) this.buyersCount = 3
         this.tradeOffer = this.actor.getFlag(moduleName, 'trade-offer') || []
         this.establishment = this.actor.getFlag(moduleName, 'establishment') || TavernSheetDSA5.getRandomEstablishmentName()
         this.roleTables = this.actor.getFlag(moduleName, 'roleTables') || []
@@ -112,6 +116,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             currentOrder: this.currentOrder,
             subTotal: this.subTotal,
             orderTotal: this.orderTotal,
+            buyersCount: this.buyersCount,
 
             bill: this.bill,
         })
@@ -199,8 +204,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         let content = `<h2>${this.actor.name} bringt euch die Rechnung:</h2>`
         let paymentPrice = this.orderTotal
         if (paymentType === 'dutch') {
-            //todo anzahl auswählbar
-            const playerCount = 3
+            const playerCount = this.buyersCount || 2
             paymentPrice = Math.ceil(this.orderTotal / playerCount * 100) / 100
             content += `<h3>Macht dann pro Kopf (geteilt durch ${playerCount}):</h3>`
         } else {
@@ -265,6 +269,10 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     //todo wrap up flag setter / getter
     _changeQuality(event) {
         this.actor.setFlag(moduleName, 'qualityOption', $(event.currentTarget)[0].value)
+    }
+
+    _changeBuyers(event) {
+        this.buyersCount = $(event.currentTarget)[0].value
     }
 
     _changeEstablishment(event) {
@@ -337,8 +345,6 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         let content = `<h2>${this.actor.name} bringt euch:</h2>`
         for (let entry of this.currentOrder) {
             content += `<p><img src="${entry.img}" style="width: 48px; margin-right: 10px"/><b>${entry.name}</b></p>`
-            if (entry.description && entry.description !== null)
-                content += `<p>${entry.description}</p>`
         }
         ChatMessage.create({
             speaker: {
