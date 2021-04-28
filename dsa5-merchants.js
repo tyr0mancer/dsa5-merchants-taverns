@@ -149,6 +149,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     async _updateInventory(event, html) {
         const qualityOption = this.actor.getFlag(moduleName, 'qualityOption') || 'taverne'
         const quality = qualityOptions.find(q => q.key === qualityOption) || {price: 1}
+
         let tradeOffer = []
         for (let table of this.roleTables) {
             let index = []
@@ -158,7 +159,10 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             let packTables = await game.packs.get(packName).getContent()
             let rolltable = packTables.find(t => t._id === tableId)
             const amount = await rollAmount(table.roll[qualityOption])
+
+
             const results = await drawManyWithoutReplacement(rolltable, amount)
+            await drawManyFromItemLibrary()
             for (let article of results) {
                 let itemDetail
                 if (article.collection) {
@@ -438,10 +442,46 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     }
 }
 
+function locationMatch(target, current) {
+    console.log(target, current)
+    return true
+}
+
+
+export async function drawManyFromItemLibrary(numbers, filter) {
+    //let table = new RollTable()
+    const location = game.settings.get("dsa5-traveller", 'location')
+
+    console.clear()
+    const itemLibrary = game.dsa5.itemLibrary
+    if (!itemLibrary.equipmentBuild) {
+        await itemLibrary.buildEquipmentIndex()
+    }
+    const index = itemLibrary.equipmentIndex
+    const result = index.search("equipment", {field: ["itemType"]})
+        .filter(item => {
+            // we dont know the current location
+            if (!location) return true
+
+            // item has no location identifier
+            const description = item.document?.data?.data?.description?.value
+            if (description === undefined || description === null) return true
+            const match = description.match(/<span class="region (.+)"/)
+            if (!match) return true
+
+            // item has a location identifier, lets check it
+            return locationMatch(match[1], location)
+        })
+
+    console.log(result)
+    return result
+}
+
 
 export async function drawManyWithoutReplacement(table, amount) {
     let result = []
     if (!table) return result
+
     if (amount >= table.data.results.length)
         return table.data.results
     while (result.length < amount) {
@@ -462,3 +502,11 @@ export async function rollAmount(wurf) {
 
 
 
+
+export default class ItemSheetLocation extends ItemSheetdsa5 {
+    constructor(item, options) {
+        super(item, options);
+        this.mce = null;
+    }
+
+}
