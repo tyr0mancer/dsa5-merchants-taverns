@@ -2,6 +2,7 @@ import DSA5Payment from "../../systems/dsa5/modules/system/payment.js";
 import ActorSheetdsa5NPC from "../../systems/dsa5/modules/actor/npc-sheet.js";
 
 const moduleName = "dsa5-merchants-taverns";
+const ROLLTABLE_WEIGHT_MAX = 5
 
 const qualityOptions = [
     {key: 'spelunke', name: "Spelunke", price: 0.75},
@@ -152,24 +153,27 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
         let tradeOffer = []
         for (let table of this.roleTables) {
-            let index = []
             const [packName, tableId] = table.table.split(':')
-            if (!packName)
-                continue
-            let packTables = await game.packs.get(packName).getContent()
-            let rolltable = packTables.find(t => t._id === tableId)
+            let rolltable
+            if (!packName) {
+                rolltable = await getRolltableFromLibrary()
+            } else {
+                let packTables = await game.packs.get(packName).getContent()
+                rolltable = packTables.find(t => t._id === tableId)
+            }
+
             const amount = await rollAmount(table.roll[qualityOption])
-
-
             const results = await drawManyWithoutReplacement(rolltable, amount)
-            await drawManyFromItemLibrary()
+
+            let index = []
             for (let article of results) {
                 let itemDetail
-                if (article.collection) {
+                if (article.collection && article.collection !== `string`) {
                     let pack = game.packs.get(article.collection)
-                    itemDetail = await pack.getEntry(article.resultId)
+                    if (pack)
+                        itemDetail = await pack.getEntry(article.resultId)
                 }
-                if (!itemDetail)
+                if (!itemDetail) {
                     index.push({
                         _id: article.resultId,
                         name: article.text,
@@ -178,23 +182,25 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
                         price: 0,
                         show: false
                     })
-                else
+                } else {
+                    let description = itemDetail.data?.description?.value
                     index.push({
                         _id: itemDetail._id,
                         name: itemDetail.name,
                         img: itemDetail.img,
-                        description: itemDetail.data?.description?.value,
+                        description,
                         collection: article.collection,
                         price: itemDetail.data?.price.value * (quality.price),
                         show: false
                     })
+                }
             }
             tradeOffer.push({
                 name: table.name,
                 index
             })
         }
-        this.actor.setFlag(moduleName, 'trade-offer', tradeOffer)
+        await this.actor.setFlag(moduleName, 'trade-offer', tradeOffer)
     }
 
     _takeOrder(event, html) {
@@ -230,9 +236,14 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             if (!money)
                 return
             if (!paymentPrice)
-                return `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">Zeche bezahlen</button>`
-            let tip = Math.ceil((price - paymentPrice) / paymentPrice * 100)
-            return `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">${tip}% Trinkgeld</button>`
+                return `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">Preis exakt bezahlen</button>`
+            let tip = Math.floor((price - paymentPrice) / paymentPrice * 100)
+
+            return `</p>Auf ${DSA5Payment._moneyToString(money)} aufrunden</p><button class="payButton" data-amount="${money}">${tip}% Trinkgeld geben</button>`
+            //return `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">${tip}% Trinkgeld</button>`
+
+
+            //return `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">${tip}% Trinkgeld</button>`
         }
 
         content += paymentChatContent(paymentPrice)
@@ -331,25 +342,15 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
 
     async _unlockInnkeeper(event) {
-        console.clear()
-        console.log(this.actor.data.permission)
         const perms = this.actor.data.permission
         perms.default = 1
         const result = await this.actor.update({permission: perms})
-        console.log(result)
-        console.log(this.actor.data.permission)
-        //this.render()
     }
 
     async _lockInnkeeper(event) {
-        console.clear()
-        console.log(this.actor.data.permission)
         const perms = this.actor.data.permission
         perms.default = 0
         const result = await this.actor.update({permission: perms})
-        console.log(result)
-        console.log(this.actor.data.permission)
-        //this.render()
     }
 
     _showOrder(event, html) {
@@ -442,39 +443,117 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     }
 }
 
-function locationMatch(target, current) {
-    console.log(target, current)
-    return true
+
+function locationMatch(current, match) {
+
+    // restructure the parameters for later use
+    let regions = []
+    let biomes = []
+    for (let rarityKey in match) {
+        let weight = parseInt(rarityKey.substr(-1))
+        if (match[rarityKey].biome)
+            biomes.push({weight, key: match[rarityKey].biome})
+        if (match[rarityKey].region)
+            regions.push({weight, key: match[rarityKey].region})
+    }
+    const availability = {regions, biomes}
+    const currentBiomeKey = current.biome?.key
+    const currentRegionKeys = current.region?.reduce((accumulator, currentValue) => {
+        return accumulator.concat(currentValue.index.map(i => i.key))
+    }, []) || []
+
+
+    // the biome is about the max weight
+    let maxWeight = ROLLTABLE_WEIGHT_MAX
+    for (let biome of availability.biomes) {
+        if (biome.key === currentBiomeKey)
+            maxWeight = biome.weight
+    }
+
+    // check for each region key as extracted from the string and update weight if higher
+    let weight = 0
+    for (let region of availability.regions) {
+        for (let key of region.key.value.split(','))
+            if ((key === 'sonst' || currentRegionKeys.includes(key)) && region.weight > weight)
+                weight = region.weight
+    }
+
+    return Math.min(weight, maxWeight)
 }
 
 
-export async function drawManyFromItemLibrary(numbers, filter) {
-    //let table = new RollTable()
-    const location = game.settings.get("dsa5-traveller", 'location')
+/**
+ * Draw many items from the DSA5 Library
+ * Filter items by current location and applicable availability first then fill a Rolltable
+ * @param filter additional filter callback function
+ * @return {Promise<*>}
+ */
+export async function getRolltableFromLibrary(filter = (item) => true) {
+    // get current location as per settings
+    // todo might call the static updateLocation from das5-traveller
+    const currentLocation = game.settings.get("dsa5-traveller", 'location')
 
-    console.clear()
+    // get the complete DSA5 Library and index if that hasn't been done yet
     const itemLibrary = game.dsa5.itemLibrary
     if (!itemLibrary.equipmentBuild) {
         await itemLibrary.buildEquipmentIndex()
     }
     const index = itemLibrary.equipmentIndex
-    const result = index.search("equipment", {field: ["itemType"]})
+
+    // todo move filter.match into for of loop to avoid calling locationMatch() twice
+    // create a new rolltable, filter index and map its content to the rolltables result
+    const results = index.search("equipment", {field: ["itemType"]})
         .filter(item => {
             // we dont know the current location
-            if (!location) return true
+            if (!currentLocation) return true
 
-            // item has no location identifier
-            const description = item.document?.data?.data?.description?.value
-            if (description === undefined || description === null) return true
-            const match = description.match(/<span class="region (.+)"/)
-            if (!match) return true
+            // additional filter is set and the item doesnt match
+            if (typeof filter === 'function' && filter(item) === false)
+                return false
 
-            // item has a location identifier, lets check it
-            return locationMatch(match[1], location)
+            // no location assigned to this item, so we assume its available in general
+            if (!item.document.data.data.location)
+                return false
+            // todo change back to true !! should be false in debug mode only
+
+            // does the current location meet the location requirements as per item definition
+            return (locationMatch(currentLocation, item.document.data.data.location) !== undefined && locationMatch(currentLocation, item.document.data.data.location) > 0)
         })
+        .map(item => {
+                // is the item linked to a compendium?
+                let collection = `string`
+                if (item.document.compendium)
+                    collection = item.document.compendium.collection
 
-    console.log(result)
-    return result
+                // how likely is the item in this region to be found?
+                let weight = 3
+                if (currentLocation && item.document.data.data.location) {
+                    weight = locationMatch(currentLocation, item.document.data.data.location)
+                }
+
+                return {
+                    collection,
+                    weight,
+                    resultId: item.document.data._id,
+                    img: item.document.data.img,
+                    text: item.document.data.name,
+                    drawn: false,
+                    range: [-1, -1],
+                    type: 1, // todo what does this property actually mean? lol
+                    flags: {}
+                }
+            }
+        )
+
+    let table = await RollTable.create({
+        name: 'temporary Table',
+        formula: `1d${results.length}`,
+        replacement: false,
+        displayRoll: true,
+        results
+    })
+    await table.normalize()
+    return table
 }
 
 
@@ -484,6 +563,7 @@ export async function drawManyWithoutReplacement(table, amount) {
 
     if (amount >= table.data.results.length)
         return table.data.results
+
     while (result.length < amount) {
         let newResult = await table.draw({displayChat: false})
         let duplicate = result.find(r => r._id === newResult.results[0]._id)
@@ -500,13 +580,6 @@ export async function rollAmount(wurf) {
     return roll.result
 }
 
-
-
-
-export default class ItemSheetLocation extends ItemSheetdsa5 {
-    constructor(item, options) {
-        super(item, options);
-        this.mce = null;
-    }
-
+export function getRandomId(prefix) {
+    return Math.random().toString(36).replace('0.', prefix || '');
 }
