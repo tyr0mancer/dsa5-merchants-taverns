@@ -2,6 +2,8 @@ import DSA5Payment from "../../systems/dsa5/modules/system/payment.js";
 import ActorSheetdsa5NPC from "../../systems/dsa5/modules/actor/npc-sheet.js";
 
 const moduleName = "dsa5-merchants-taverns";
+const locationModuleName = "dsa5-traveller"
+
 const ROLLTABLE_WEIGHT_MAX = 5
 
 // todo tidy this up and make Q and P selectable independently
@@ -181,15 +183,37 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
                                 return true
                         return false
                     }
-                rolltable = await getRolltableFromLibrary(tableId, table.filterLocation, filter)
+
+                //let temp = await getRolltableFromLibrary(tableId, table.filterLocation, filter)
+                rolltable = await getFilteredWeightedRolltable({
+                    libraryCategory: tableId, filterLocation: table.filterLocation, filter
+                })
+
             } else {
-                let packTables = await game.packs.get(packName).getContent()
-                rolltable = packTables.find(t => t._id === tableId)
-                //todo allow rolltables to be filtered by location
+                const filter = (!table.libraryKeyword || false)
+                    ? undefined
+                    : (item) => {
+                        return true
+                        /*
+                                                for (let keyword of table.libraryKeyword.split(','))
+                                                    if ((item.name && item.name.toLowerCase().includes(keyword.toLowerCase())) ||
+                                                        (item.data.description?.value && item.data.description.value.toLowerCase().includes(keyword.toLowerCase())))
+                                                        return true
+                                                return false
+                        */
+                    }
+
+                rolltable = await getFilteredWeightedRolltable({
+                    packName, tableId, filterLocation: table.filterLocation, filter
+                })
+                //rolltable = await getRolltableFromPack(packName, tableId, table.filterLocation, filter)
             }
 
             const amount = await rollAmount(table.roll[qualityOption])
             const results = await drawManyWithoutReplacement(rolltable, amount)
+
+            if (rolltable?.name.substr(-10) === '_TEMPORARY')
+                rolltable.delete()
 
             let index = []
             for (let article of results) {
@@ -383,10 +407,6 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             if (!roleTables[$(event.currentTarget).attr("data-category-id")][key] || Array.isArray(roleTables[$(event.currentTarget).attr("data-category-id")][key]))
                 roleTables[$(event.currentTarget).attr("data-category-id")][key] = {}
             roleTables[$(event.currentTarget).attr("data-category-id")][key][$(event.currentTarget).attr("data-quality-key")] = $(event.currentTarget)[0].value
-            /*
-                    } else if (key === 'table') {
-                        roleTables[$(event.currentTarget).attr("data-category-id")][key] = $(event.currentTarget)[0].value
-            */
         } else {
             roleTables[$(event.currentTarget).attr("data-category-id")][key] = $(event.currentTarget)[0].value
         }
@@ -542,7 +562,10 @@ function locationMatch(current, match) {
 
 export async function drawManyWithoutReplacement(table, amount) {
     let result = []
+    //if (!table || !table.data) return result
     if (!table) return result
+    if (!table.data)
+        console.log(table)
 
     if (amount >= table.data.results.length)
         return table.data.results
@@ -553,31 +576,66 @@ export async function drawManyWithoutReplacement(table, amount) {
         if (duplicate === undefined)
             result.push(newResult.results[0])
     }
+    table.reset()
     return result
 }
 
 
+
+export async function rollAmount(wurf) {
+    if (!wurf || wurf === "") return 0
+    let roll = new Roll(wurf);
+    roll.evaluate();
+    return roll.result
+}
+
+
 /**
- * Draw many items from the DSA5 Library
- * Filter items by current location and applicable availability first then fill a Rolltable
+ * Create temporary Rolltable from the DSA5 Library or another rolltable
+ * Filter rolltable result by current location and applicable availability and/or keywords before returning the table
+ * @param packName
+ * @param tableId
+ * @param libraryCategory
+ * @param filterLocation
  * @param filter additional filter callback function
  * @return {Promise<*>}
  */
-export async function getRolltableFromLibrary(category = "equipment", filterLocation = false, filter = (item) => true) {
+export async function getFilteredWeightedRolltable({packName, tableId, libraryCategory, filterLocation = false, filter}) {
+
     // get current location as per settings
-    // todo call the static updateLocation from das5-traveller instead
-    const currentLocation = game.settings.get("dsa5-traveller", 'location')
+    const currentLocation = game.settings.get(locationModuleName, 'location')
 
-    // get the complete DSA5 Library and index if that hasn't been done yet
-    const itemLibrary = game.dsa5.itemLibrary
-    if (!itemLibrary.equipmentBuild) {
-        await itemLibrary.buildEquipmentIndex()
+    // prepare items
+    let itemIndex = []
+    let getItemData = (e) => e
+    if (libraryCategory) {
+        // get the complete DSA5 Library and index if that hasn't been done yet
+        const itemLibrary = game.dsa5.itemLibrary
+        if (!itemLibrary.equipmentBuild) {
+            await itemLibrary.buildEquipmentIndex()
+        }
+        itemIndex = itemLibrary.equipmentIndex.search(libraryCategory, {field: ["itemType"]})
+        getItemData = (e) => e.document.data
+    } else {
+        let packTables = await game.packs.get(packName).getContent()
+        itemIndex = duplicate(packTables.find(t => t._id === tableId)?.data.results) || [];
     }
-
 
     // create weighted results depending on current location and item location
     let results = []
-    for (let item of itemLibrary.equipmentIndex.search(category, {field: ["itemType"]})) {
+    for (let entry of itemIndex) {
+        let item = entry
+
+        if (!libraryCategory && entry.collection && entry.resultId) {
+            let pack = game.packs.get(entry.collection)
+            if (!pack)
+                continue
+            item = await pack.getEntry(entry.resultId)
+            if (!item)
+                continue
+        }
+
+
         // additional filter is set and the item doesnt match
         if (typeof filter === 'function' && filter(item) === false)
             continue
@@ -587,13 +645,9 @@ export async function getRolltableFromLibrary(category = "equipment", filterLoca
 
         // we filter by location and we know the current location
         if (filterLocation && currentLocation) {
-
             // no location assigned to this item, so we assume its available in general
-            if (item.document.data.data.location) {
-                weight = locationMatch(currentLocation, item.document.data.data.location)
-            } else {
-                continue
-                // todo remove this else clause change after debugging or make it selectable
+            if (getItemData(item).data?.location) {
+                weight = locationMatch(currentLocation, getItemData(item).data.location)
             }
 
             // item is not available here
@@ -603,43 +657,48 @@ export async function getRolltableFromLibrary(category = "equipment", filterLoca
 
         // is the item linked to a compendium?
         let collection = `string`
-        if (item.document.compendium)
+        let type = 0
+        let text = getItemData(item).name
+        let resultId = getItemData(item)._id
+        if (item.document?.compendium) {
             collection = item.document.compendium.collection
+            type = 2
+        } else if (item.collection) {
+            collection = item.collection
+            resultId = getItemData(item).resultId
+            text = getItemData(item).text
+            type = 2
+        } else if (getItemData(item)._id) {
+            collection = "Item"
+            type = 1
+        }
 
+
+        // push data to results
         results.push({
             collection,
             weight,
-            resultId: item.document.data._id,
-            img: item.document.data.img,
-            text: item.document.data.name,
+            type,
+            text,
+            resultId,
+            img: getItemData(item).img,
             drawn: false,
             range: [-1, -1],
-            type: 1, // todo what does this property actually mean? lol
             flags: {}
         })
-
-
     }
 
+
     // create temporary rolltable with above results and normalize
-    let table = await RollTable.create({
-        name: 'temporary Table',
+    const tableData = {
+        name: 'rolltable_TEMPORARY_',
         formula: `1d${results.length}`,
         replacement: false,
         displayRoll: true,
         results
-    })
+    }
+    let table = await RollTable.create(tableData)
     await table.normalize()
     return table
-}
 
-export async function rollAmount(wurf) {
-    if (!wurf || wurf === "") return 0
-    let roll = new Roll(wurf);
-    roll.evaluate();
-    return roll.result
-}
-
-export function getRandomId(prefix) {
-    return Math.random().toString(36).replace('0.', prefix || '');
 }
