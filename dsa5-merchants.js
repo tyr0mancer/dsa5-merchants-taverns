@@ -124,7 +124,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
         const data = super.getData();
         mergeObject(data, {
-            qualityOptions,priceOptions,
+            qualityOptions, priceOptions,
             qualityOption: this.qualityOption,
             rolltableOptions: this.rolltableOptions,
             libraryOptions: this.libraryOptions,
@@ -237,13 +237,23 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             return
         const paymentType = $(event.currentTarget).attr("data-payment")
         let content = `<h2>${this.actor.name} bringt euch die Rechnung:</h2>`
+
+        let i = 1
+        for (let round of this.bill)
+            if (Array.isArray(round)) {
+                content += `<h3>${i++}. Runde:</h3>`
+                for (let order of round)
+                    content += `<p>${order.name} <span style="float:right">${DSA5Payment._moneyToString(order.price)}</span></p>`
+            }
+
+
         let paymentPrice = this.orderTotal
+        content += `<hr/><h3>Macht dann insgesamt: <span style="float:right">${DSA5Payment._moneyToString(this.orderTotal)}</span></h3>`
+
         if (paymentType === 'dutch') {
             const playerCount = this.buyersCount || 2
             paymentPrice = Math.ceil(this.orderTotal / playerCount * 100) / 100
-            content += `<h3>Macht dann pro Kopf (geteilt durch ${playerCount}):</h3>`
-        } else {
-            content += `<h3>Macht dann zusammen:</h3>`
+            content += `<h3><b>Pro Kopf (geteilt durch ${playerCount}):</b> <span style="float:right">${DSA5Payment._moneyToString(paymentPrice)}</span></h3>`
         }
 
 
@@ -252,14 +262,15 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             if (!money)
                 return
             if (!paymentPrice)
-                return `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">Preis exakt bezahlen</button>`
+                return `<button class="payButton" data-amount="${money}">${DSA5Payment._moneyToString(money)} bezahlen</button>`
+
+            if ((price - paymentPrice) === 0) return ''
+
             let tip = Math.floor((price - paymentPrice) / paymentPrice * 100)
+            return `<button class="payButton" data-amount="${money}">Auf ${DSA5Payment._moneyToString(money)} aufrunden (${tip}% Trinkgeld)</button>`
 
-            return `</p>Auf ${DSA5Payment._moneyToString(money)} aufrunden</p><button class="payButton" data-amount="${money}">${tip}% Trinkgeld geben</button>`
-            //return `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">${tip}% Trinkgeld</button>`
+            //return `</p>Auf ${DSA5Payment._moneyToString(money)} aufrunden</p><button class="payButton" data-amount="${money}">${tip}% Trinkgeld geben</button>`
 
-
-            //return `</p>${game.i18n.format("PAYMENT.paySum", {amount: DSA5Payment._moneyToString(money)})}</p><button class="payButton" data-amount="${money}">${tip}% Trinkgeld</button>`
         }
 
         content += paymentChatContent(paymentPrice)
@@ -382,7 +393,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     _showOrder(event, html) {
         let content = `<h2>${this.actor.name} zeigt euch:</h2>`
         for (let entry of this.currentOrder) {
-            content += `<p><img src="${entry.img}" style="width: 48px; margin-right: 10px"/><b>${entry.name}</b></p>`
+            content += `<p><img src="${entry.img}" style="width: 48px; margin-right: 10px; vertical-align: middle"/><b>${entry.name}</b></p>`
             if (entry.description && entry.description !== null)
                 content += `<p>${entry.description}</p>`
         }
@@ -397,7 +408,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     _serveOrder(event, html) {
         let content = `<h2>${this.actor.name} bringt euch:</h2>`
         for (let entry of this.currentOrder) {
-            content += `<p><img src="${entry.img}" style="width: 48px; margin-right: 10px"/><b>${entry.name}</b></p>`
+            content += `<p><img src="${entry.img}" style="width: 48px; margin-right: 10px; vertical-align: middle"/><b>${entry.name}</b></p>`
         }
         ChatMessage.create({
             speaker: {
