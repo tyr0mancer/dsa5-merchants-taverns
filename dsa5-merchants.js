@@ -4,7 +4,11 @@ import ActorSheetdsa5NPC from "../../systems/dsa5/modules/actor/npc-sheet.js";
 const moduleName = "dsa5-merchants-taverns";
 const locationModuleName = "dsa5-traveller"
 
-const ROLLTABLE_WEIGHT_MAX = 5
+/* todo to be put in config */
+const ROLLTABLE_WEIGHT_RARITY = 5
+const calculateWeight = (rarity) => rarity * rarity
+const INITIAL_WEIGHT = calculateWeight(Math.floor(ROLLTABLE_WEIGHT_RARITY / 2))
+
 
 // todo tidy this up and make Q and P selectable independently
 const qualityOptions = [
@@ -527,7 +531,7 @@ function locationMatch(current, match) {
     let regions = []
     let biomes = []
     for (let rarityKey in match) {
-        let weight = parseInt(rarityKey.substr(-1))
+        let weight = calculateWeight(parseInt(rarityKey.substr(-1)))
         if (match[rarityKey].biome)
             biomes.push({weight, key: match[rarityKey].biome})
         if (match[rarityKey].region)
@@ -541,7 +545,7 @@ function locationMatch(current, match) {
 
 
     // the biome is about the max weight
-    let maxWeight = ROLLTABLE_WEIGHT_MAX
+    let maxWeight = calculateWeight(ROLLTABLE_WEIGHT_RARITY)
     for (let biome of availability.biomes) {
         if (biome.key === currentBiomeKey)
             maxWeight = biome.weight
@@ -576,7 +580,6 @@ export async function drawManyWithoutReplacement(table, amount) {
     table.reset()
     return result
 }
-
 
 
 export async function rollAmount(wurf) {
@@ -638,7 +641,7 @@ export async function getFilteredWeightedRolltable({packName, tableId, libraryCa
             continue
 
         // set probability of this item being available to ddefault
-        let weight = 3
+        let weight = INITIAL_WEIGHT
 
         // we filter by location and we know the current location
         if (filterLocation && currentLocation) {
