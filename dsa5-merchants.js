@@ -5,10 +5,18 @@ const moduleName = "dsa5-merchants-taverns";
 const ROLLTABLE_WEIGHT_MAX = 5
 
 const qualityOptions = [
-    {key: 'spelunke', name: "Spelunke", price: 0.75},
-    {key: 'taverne', name: "Taverne", price: 1},
-    {key: 'herberge', name: "Herberge", price: 1.25},
-    {key: 'hotel', name: "Hotel", price: 1.5}
+    {key: 'spelunke', name: "Q1", price: 0.75},
+    {key: 'taverne', name: "Q2", price: 1},
+    {key: 'herberge', name: "Q3", price: 1.25},
+    {key: 'hotel', name: "Q4", price: 1.5},
+    {key: 'best', name: "Q5", price: 2}
+]
+const priceOptions = [
+    {key: 'spelunke', name: "P1", price: 0.75},
+    {key: 'taverne', name: "P2", price: 1},
+    {key: 'herberge', name: "P3", price: 1.25},
+    {key: 'hotel', name: "P4", price: 1.5},
+    {key: 'best', name: "P5", price: 2}
 ]
 
 Hooks.once("init", () => {
@@ -64,6 +72,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         html.find("button[name='add-category']").click(event => this._addCategory(event, html));
         html.find("input[name='category-name']").change(event => this._changeCategory(event, 'name'));
         html.find("input[name='category-roll']").change(event => this._changeCategory(event, 'roll'));
+
         html.find("select[name='category-rolltable']").change(event => this._changeCategory(event, 'table'));
         html.find("select[name='quality']").change(event => this._changeQuality(event));
         html.find("select[name='buyers']").change(event => this._changeBuyers(event));
@@ -71,6 +80,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
         html.find("input[name='establishment']").change(event => this._changeEstablishment(event));
         html.find("input[name='is-tavern']").change(event => this._changeIsTavern(event));
+        html.find("input[name='filter-location']").change(event => this._changeFilterLocation(event));
 
 
     }
@@ -109,12 +119,15 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             })
         }
 
+        this.libraryOptions = ["meleeweapon", "armor", "equipment", "poison", "consumable", "rangeweapon"]
+
 
         const data = super.getData();
         mergeObject(data, {
-            qualityOptions,
+            qualityOptions,priceOptions,
             qualityOption: this.qualityOption,
             rolltableOptions: this.rolltableOptions,
+            libraryOptions: this.libraryOptions,
             locked: (this.actor.data.permission.default !== 1),
             roleTables: this.roleTables,
             isTavern: this.isTavern,
@@ -156,10 +169,13 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             const [packName, tableId] = table.table.split(':')
             let rolltable
             if (!packName) {
-                rolltable = await getRolltableFromLibrary()
+                return
+            } else if (packName === 'libraryItems') {
+                rolltable = await getRolltableFromLibrary(tableId, table.filterLocation)
             } else {
                 let packTables = await game.packs.get(packName).getContent()
                 rolltable = packTables.find(t => t._id === tableId)
+                //todo allow rolltables to be filtered by location
             }
 
             const amount = await rollAmount(table.roll[qualityOption])
@@ -303,6 +319,16 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         this.actor.setFlag(moduleName, 'establishment', $(event.currentTarget)[0].value)
     }
 
+
+    async _changeFilterLocation(event) {
+        const categoryId = $(event.currentTarget).attr("data-category-id")
+        let roleTables = duplicate(this.roleTables);
+        roleTables[categoryId].filterLocation = event.currentTarget.checked
+        this.actor.setFlag(moduleName, 'roleTables', roleTables)
+        this.roleTables = roleTables
+        this.render()
+    }
+
     _deleteCategory(event, html) {
         const categoryId = $(event.currentTarget).attr("data-category-id")
         let roleTables = duplicate(this.roleTables);
@@ -314,7 +340,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
     _addCategory(event, html) {
         let roleTables = duplicate(this.roleTables);
-        roleTables.push({roll: {}, name: 'neu'})
+        roleTables.push({roll: {}, name: '', regionFilter: false})
         this.actor.setFlag(moduleName, 'roleTables', roleTables)
         this.roleTables = roleTables
         this.render()
@@ -478,7 +504,25 @@ function locationMatch(current, match) {
                 weight = region.weight
     }
 
-    return Math.min(weight, maxWeight)
+    const result = Math.min(weight, maxWeight)
+    return result
+}
+
+
+export async function drawManyWithoutReplacement(table, amount) {
+    let result = []
+    if (!table) return result
+
+    if (amount >= table.data.results.length)
+        return table.data.results
+
+    while (result.length < amount) {
+        let newResult = await table.draw({displayChat: false})
+        let duplicate = result.find(r => r._id === newResult.results[0]._id)
+        if (duplicate === undefined)
+            result.push(newResult.results[0])
+    }
+    return result
 }
 
 
@@ -488,9 +532,9 @@ function locationMatch(current, match) {
  * @param filter additional filter callback function
  * @return {Promise<*>}
  */
-export async function getRolltableFromLibrary(filter = (item) => true) {
+export async function getRolltableFromLibrary(category = "equipment", filterLocation = false, filter = (item) => true) {
     // get current location as per settings
-    // todo might call the static updateLocation from das5-traveller
+    // todo call the static updateLocation from das5-traveller instead
     const currentLocation = game.settings.get("dsa5-traveller", 'location')
 
     // get the complete DSA5 Library and index if that hasn't been done yet
@@ -502,10 +546,10 @@ export async function getRolltableFromLibrary(filter = (item) => true) {
 
     // todo move filter.match into for of loop to avoid calling locationMatch() twice
     // create a new rolltable, filter index and map its content to the rolltables result
-    const results = index.search("equipment", {field: ["itemType"]})
+    const results = index.search(category, {field: ["itemType"]})
         .filter(item => {
-            // we dont know the current location
-            if (!currentLocation) return true
+            // we dont know the current location or we dont care anyway
+            if (!currentLocation || !filterLocation) return true
 
             // additional filter is set and the item doesnt match
             if (typeof filter === 'function' && filter(item) === false)
@@ -517,7 +561,8 @@ export async function getRolltableFromLibrary(filter = (item) => true) {
             // todo change back to true !! should be false in debug mode only
 
             // does the current location meet the location requirements as per item definition
-            return (locationMatch(currentLocation, item.document.data.data.location) !== undefined && locationMatch(currentLocation, item.document.data.data.location) > 0)
+            let weight = locationMatch(currentLocation, item.document.data.data.location)
+            return (weight && weight > 0)
         })
         .map(item => {
                 // is the item linked to a compendium?
@@ -529,6 +574,7 @@ export async function getRolltableFromLibrary(filter = (item) => true) {
                 let weight = 3
                 if (currentLocation && item.document.data.data.location) {
                     weight = locationMatch(currentLocation, item.document.data.data.location)
+                    if (!weight || weight < 1) return {}
                 }
 
                 return {
@@ -554,23 +600,6 @@ export async function getRolltableFromLibrary(filter = (item) => true) {
     })
     await table.normalize()
     return table
-}
-
-
-export async function drawManyWithoutReplacement(table, amount) {
-    let result = []
-    if (!table) return result
-
-    if (amount >= table.data.results.length)
-        return table.data.results
-
-    while (result.length < amount) {
-        let newResult = await table.draw({displayChat: false})
-        let duplicate = result.find(r => r._id === newResult.results[0]._id)
-        if (duplicate === undefined)
-            result.push(newResult.results[0])
-    }
-    return result
 }
 
 export async function rollAmount(wurf) {

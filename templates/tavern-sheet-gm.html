@@ -3,7 +3,7 @@
 
         <div>
             <h1>Rolltables</h1>
-            <button name="add-category">Rolltable hinzufügen</button>
+            <button name="add-category">Kategorie hinzufügen</button>
 
             {{#each roleTables as |category id|}}
             <hr/>
@@ -12,15 +12,23 @@
                     <h3>Name:</h3>
                     <input name="category-name" value="{{category.name}}" data-category-id="{{id}}"/>
 
-                    <h3>RollTable</h3>
-                    <select name="category-rolltable" data-category-id="{{id}}" style="width: 175px">
-                        {{#select table}}
-                        <option></option>
-                        {{#each ../rolltableOptions}}
-                        <option value="{{packName}}:{{_id}}">{{name}}</option>
-                        {{/each}}
-                        {{/select}}
-                    </select>
+                    <h3>Quelle</h3>
+                    <div>
+                        <select name="category-rolltable" data-category-id="{{id}}" style="width: 175px">
+                            {{#select table}}
+                            <option></option>
+                            {{#each ../libraryOptions}}
+                            <option value="libraryItems:{{this}}">Bibliothek: {{localize this}}</option>
+                            {{/each}}
+                            {{#each ../rolltableOptions}}
+                            <option value="{{packName}}:{{_id}}">{{name}}</option>
+                            {{/each}}
+                            {{/select}}
+                        </select>
+                        <label>Nach Ort filtern: <input name="filter-location" {{#if category.filterLocation}}checked="checked" {{/if}}
+                            data-category-id="{{id}}" type="checkbox"/> </label>
+
+                    </div>
 
                     <h3>Anzahl</h3>
                     <table>
@@ -43,7 +51,7 @@
                     </table>
 
                     <div></div>
-                    <button name="delete-category" data-category-id="{{id}}">Rolltable löschen</button>
+                    <button name="delete-category" data-category-id="{{id}}">Kategorie löschen</button>
                 </div>
 
             </div>
@@ -85,7 +93,7 @@
                     <select name="quality" style="width: 95px">
                         {{#select qualityOption}}
                         <option>-- auswählen</option>
-                        {{#each qualityOptions}}
+                        {{#each priceOptions}}
                         <option value="{{key}}">{{name}}</option>
                         {{/each}}
                         {{/select}}
@@ -110,28 +118,28 @@
                 {{#each tradeOffer}}
                 <h2>{{name}}</h2>
                 {{#each index}}
-                <div class="entry" style="display: grid; grid-template-columns: auto 100px 100px;">
+                <div class="entry" style="display: grid; grid-template-columns: auto 100px 100px;" onclick="$('div.description.{{_id}}').toggle();">
                     <div>
                         {{#if show}}
                         <h3>
-                            {{#if description}}
-                            <a onclick="$('div.description.{{_id}}').toggle();"><i class="fas fa-info-circle"></i></a>
-                            {{/if}}
                             {{name}}
+                            {{#if description}}
+                            <i class="fas fa-info-circle" style="float: right; margin-right: 15px"></i>
+                            {{/if}}
                         </h3>
                         <div class="description {{_id}}">{{{description}}}</div>
                         {{else}}
                         <h3 style="background-color: lightgray">
-                            {{#if description}}
-                            <a onclick="$('div.description.{{_id}}').toggle();"><i class="fas fa-info-circle"></i></a>
-                            {{/if}}
+                            <a name="toggle-show-entry" data-entry-id="{{_id}}" data-show="true"><i class="fas fa-eye"></i></a>
                             {{name}}
-                            <a name="toggle-show-entry" data-entry-id="{{_id}}" data-show="true"> <i>Spielern zeigen</i></a>
+                            {{#if description}}
+                            <i class="fas fa-info-circle" style="float: right; margin-right: 10px"></i>
+                            {{/if}}
                         </h3>
                         <div class="description {{_id}}">{{{description}}}</div>
                         {{/if}}
                     </div>
-                    <div>{{{money price}}}</div>
+                    <div style="text-align: right; padding-right: 10px">{{{money price}}}</div>
                     <div>
                         <button name="take-order" data-entry-id="{{_id}}"><i class="fas fa-cart-plus"></i></button>
                     </div>
