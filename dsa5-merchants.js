@@ -553,55 +553,55 @@ export async function getRolltableFromLibrary(category = "equipment", filterLoca
     if (!itemLibrary.equipmentBuild) {
         await itemLibrary.buildEquipmentIndex()
     }
-    const index = itemLibrary.equipmentIndex
 
-    // todo move filter.match into for of loop to avoid calling locationMatch() twice
-    // create a new rolltable, filter index and map its content to the rolltables result
-    const results = index.search(category, {field: ["itemType"]})
-        .filter(item => {
-            // we dont know the current location or we dont care anyway
-            if (!currentLocation || !filterLocation) return true
 
-            // additional filter is set and the item doesnt match
-            if (typeof filter === 'function' && filter(item) === false)
-                return false
+    // create weighted results depending on current location and item location
+    let results = []
+    for (let item of itemLibrary.equipmentIndex.search(category, {field: ["itemType"]})) {
+        // additional filter is set and the item doesnt match
+        if (typeof filter === 'function' && filter(item) === false)
+            continue
+
+        // set probability of this item being available to ddefault
+        let weight = 3
+
+        // we filter by location and we know the current location
+        if (filterLocation && currentLocation) {
 
             // no location assigned to this item, so we assume its available in general
-            if (!item.document.data.data.location)
-                return false
-            // todo change back to true !! should be false in debug mode only
-
-            // does the current location meet the location requirements as per item definition
-            let weight = locationMatch(currentLocation, item.document.data.data.location)
-            return (weight && weight > 0)
-        })
-        .map(item => {
-                // is the item linked to a compendium?
-                let collection = `string`
-                if (item.document.compendium)
-                    collection = item.document.compendium.collection
-
-                // how likely is the item in this region to be found?
-                let weight = 3
-                if (currentLocation && item.document.data.data.location) {
-                    weight = locationMatch(currentLocation, item.document.data.data.location)
-                    if (!weight || weight < 1) return {}
-                }
-
-                return {
-                    collection,
-                    weight,
-                    resultId: item.document.data._id,
-                    img: item.document.data.img,
-                    text: item.document.data.name,
-                    drawn: false,
-                    range: [-1, -1],
-                    type: 1, // todo what does this property actually mean? lol
-                    flags: {}
-                }
+            if (item.document.data.data.location) {
+                weight = locationMatch(currentLocation, item.document.data.data.location)
+            } else {
+                continue
+                // todo remove this else clause change !!
             }
-        )
 
+            // item is not available here
+            if (!weight || weight < 1)
+                continue
+        }
+
+        // is the item linked to a compendium?
+        let collection = `string`
+        if (item.document.compendium)
+            collection = item.document.compendium.collection
+
+        results.push({
+            collection,
+            weight,
+            resultId: item.document.data._id,
+            img: item.document.data.img,
+            text: item.document.data.name,
+            drawn: false,
+            range: [-1, -1],
+            type: 1, // todo what does this property actually mean? lol
+            flags: {}
+        })
+
+
+    }
+
+    // create temporary rolltable with above results and normalize
     let table = await RollTable.create({
         name: 'temporary Table',
         formula: `1d${results.length}`,
