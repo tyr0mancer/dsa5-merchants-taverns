@@ -70,7 +70,8 @@
                     </label>
                 </div>
                 <div>
-                    <label>Taverne: <input name="is-tavern" {{#if isTavern}}checked="checked"{{/if}} type="checkbox"/> </label>
+                    <label>Taverne: <input name="is-tavern" {{#if isTavern}}checked="checked" {{/if}} type="checkbox"/>
+                    </label>
                 </div>
                 <div>
                     <select name="quality" style="width: 95px">
@@ -112,16 +113,22 @@
                 <div class="entry" style="display: grid; grid-template-columns: auto 100px 100px;">
                     <div>
                         {{#if show}}
-                        <h3>{{name}}
+                        <h3>
                             {{#if description}}
                             <a onclick="$('div.description.{{_id}}').toggle();"><i class="fas fa-info-circle"></i></a>
                             {{/if}}
+                            {{name}}
                         </h3>
                         <div class="description {{_id}}">{{{description}}}</div>
                         {{else}}
-                        <h3 style="background-color: lightgray"><a name="toggle-show-entry" data-entry-id="{{_id}}"
-                                                                   data-show="true"> <i>Spielern
-                            zeigen</i></a> {{name}}</h3>
+                        <h3 style="background-color: lightgray">
+                            {{#if description}}
+                            <a onclick="$('div.description.{{_id}}').toggle();"><i class="fas fa-info-circle"></i></a>
+                            {{/if}}
+                            {{name}}
+                            <a name="toggle-show-entry" data-entry-id="{{_id}}" data-show="true"> <i>Spielern zeigen</i></a>
+                        </h3>
+                        <div class="description {{_id}}">{{{description}}}</div>
                         {{/if}}
                     </div>
                     <div>{{{money price}}}</div>
