@@ -562,10 +562,7 @@ function locationMatch(current, match) {
 
 export async function drawManyWithoutReplacement(table, amount) {
     let result = []
-    //if (!table || !table.data) return result
-    if (!table) return result
-    if (!table.data)
-        console.log(table)
+    if (!table || !table.data) return result
 
     if (amount >= table.data.results.length)
         return table.data.results
@@ -663,10 +660,10 @@ export async function getFilteredWeightedRolltable({packName, tableId, libraryCa
         if (item.document?.compendium) {
             collection = item.document.compendium.collection
             type = 2
-        } else if (item.collection) {
-            collection = item.collection
-            resultId = getItemData(item).resultId
-            text = getItemData(item).text
+        } else if (entry.collection) {
+            collection = entry.collection
+            resultId = getItemData(entry).resultId
+            text = getItemData(entry).text
             type = 2
         } else if (getItemData(item)._id) {
             collection = "Item"
