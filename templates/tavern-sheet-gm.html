@@ -25,8 +25,16 @@
                             {{/each}}
                             {{/select}}
                         </select>
-                        <label>Nach Ort filtern: <input name="filter-location" {{#if category.filterLocation}}checked="checked" {{/if}}
-                            data-category-id="{{id}}" type="checkbox"/> </label>
+                        <div>
+                            <label>Nach Ort filtern: <input name="filter-location" {{#if
+                                                            category.filterLocation}}checked="checked" {{/if}}
+                                data-category-id="{{id}}" type="checkbox"/> </label>
+                        </div>
+                        <div>
+                            <input name="library-keyword" placeholder="Nach Name filtern"
+                                   data-category-id="{{id}}" value="{{category.libraryKeyword}}"/>
+                        </div>
+
 
                     </div>
 
@@ -118,7 +126,8 @@
                 {{#each tradeOffer}}
                 <h2>{{name}}</h2>
                 {{#each index}}
-                <div class="entry" style="display: grid; grid-template-columns: auto 100px 100px;" onclick="$('div.description.{{_id}}').toggle();">
+                <div class="entry" style="display: grid; grid-template-columns: auto 100px 100px;"
+                     onclick="$('div.description.{{_id}}').toggle();">
                     <div>
                         {{#if show}}
                         <h3>
@@ -130,7 +139,8 @@
                         <div class="description {{_id}}">{{{description}}}</div>
                         {{else}}
                         <h3 style="background-color: lightgray">
-                            <a name="toggle-show-entry" data-entry-id="{{_id}}" data-show="true"><i class="fas fa-eye"></i></a>
+                            <a name="toggle-show-entry" data-entry-id="{{_id}}" data-show="true"><i
+                                    class="fas fa-eye"></i></a>
                             {{name}}
                             {{#if description}}
                             <i class="fas fa-info-circle" style="float: right; margin-right: 10px"></i>

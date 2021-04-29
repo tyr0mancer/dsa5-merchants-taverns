@@ -4,6 +4,7 @@ import ActorSheetdsa5NPC from "../../systems/dsa5/modules/actor/npc-sheet.js";
 const moduleName = "dsa5-merchants-taverns";
 const ROLLTABLE_WEIGHT_MAX = 5
 
+// todo tidy this up and make Q and P selectable independently
 const qualityOptions = [
     {key: 'spelunke', name: "Q1", price: 0.75},
     {key: 'taverne', name: "Q2", price: 1},
@@ -77,12 +78,12 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         html.find("select[name='quality']").change(event => this._changeQuality(event));
         html.find("select[name='buyers']").change(event => this._changeBuyers(event));
 
+        html.find("input[name='filter-location']").change(event => this._changeFilterLocation(event));
+        html.find("input[name='library-keyword']").change(event => this._changeLibraryKeyword(event));
+
 
         html.find("input[name='establishment']").change(event => this._changeEstablishment(event));
         html.find("input[name='is-tavern']").change(event => this._changeIsTavern(event));
-        html.find("input[name='filter-location']").change(event => this._changeFilterLocation(event));
-
-
     }
 
     playerViewEnabled() {
@@ -171,7 +172,16 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             if (!packName) {
                 return
             } else if (packName === 'libraryItems') {
-                rolltable = await getRolltableFromLibrary(tableId, table.filterLocation)
+                const filter = (!table.libraryKeyword || false)
+                    ? undefined
+                    : (item) => {
+                        for (let keyword of table.libraryKeyword.split(','))
+                            if ((item.document.data.name && item.document.data.name.toLowerCase().includes(keyword.toLowerCase())) ||
+                                (item.document.data.data.description.value && item.document.data.data.description.value.toLowerCase().includes(keyword.toLowerCase())))
+                                return true
+                        return false
+                    }
+                rolltable = await getRolltableFromLibrary(tableId, table.filterLocation, filter)
             } else {
                 let packTables = await game.packs.get(packName).getContent()
                 rolltable = packTables.find(t => t._id === tableId)
@@ -340,6 +350,15 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         this.render()
     }
 
+    _changeLibraryKeyword(event) {
+        const categoryId = $(event.currentTarget).attr("data-category-id")
+        let roleTables = duplicate(this.roleTables);
+        roleTables[categoryId].libraryKeyword = event.currentTarget.value
+        this.actor.setFlag(moduleName, 'roleTables', roleTables)
+        this.roleTables = roleTables
+    }
+
+
     _deleteCategory(event, html) {
         const categoryId = $(event.currentTarget).attr("data-category-id")
         let roleTables = duplicate(this.roleTables);
@@ -351,7 +370,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
     _addCategory(event, html) {
         let roleTables = duplicate(this.roleTables);
-        roleTables.push({roll: {}, name: '', regionFilter: false})
+        roleTables.push({roll: {}, name: '', regionFilter: false, libraryKeyword: ''})
         this.actor.setFlag(moduleName, 'roleTables', roleTables)
         this.roleTables = roleTables
         this.render()
@@ -478,6 +497,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
     async _changeIsTavern(event) {
         this.actor.setFlag(moduleName, 'is-tavern', event.currentTarget.checked)
     }
+
 }
 
 
@@ -573,7 +593,7 @@ export async function getRolltableFromLibrary(category = "equipment", filterLoca
                 weight = locationMatch(currentLocation, item.document.data.data.location)
             } else {
                 continue
-                // todo remove this else clause change !!
+                // todo remove this else clause change after debugging or make it selectable
             }
 
             // item is not available here
