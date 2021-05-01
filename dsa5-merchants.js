@@ -691,7 +691,7 @@ export async function getFilteredWeightedRolltable({packName, tableId, libraryCa
 
     // create temporary rolltable with above results and normalize
     const tableData = {
-        name: 'rolltable_TEMPORARY_',
+        name: 'rolltable_TEMPORARY',
         formula: `1d${results.length}`,
         replacement: false,
         displayRoll: true,

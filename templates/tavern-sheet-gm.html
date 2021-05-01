@@ -16,9 +16,9 @@
                     <div>
                         <select name="category-rolltable" data-category-id="{{id}}" style="width: 175px">
                             {{#select table}}
-                            <option></option>
+                            <option>-- Rolltable oder Bibliothek wählen --</option>
                             {{#each ../libraryOptions}}
-                            <option value="libraryItems:{{this}}">Bibliothek: {{localize this}}</option>
+                            <option value="libraryItems:{{this}}">DSA5 Bibliothek: {{localize this}}</option>
                             {{/each}}
                             {{#each ../rolltableOptions}}
                             <option value="{{packName}}:{{_id}}">{{name}}</option>
