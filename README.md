@@ -8,6 +8,10 @@ DSA5 NPC Character Sheet zum Handel.
 ### Screenshot
 ![Version 0.5](http://dsa5-homebrew.skatfeinde.de/merchants-taverns.jpg)
 
+### Andere Module
+- Unterstützt [DSA5 Meistertools](https://github.com/tyr0mancer/dsa5-meistertools)
+- Unterstützt [DSA5 Traveller](https://github.com/tyr0mancer/dsa5-traveller)
+- Kann mit Inhalten aus eigenen Homebrew Modulen kombiniert werden
 
 ### Installation 
 
