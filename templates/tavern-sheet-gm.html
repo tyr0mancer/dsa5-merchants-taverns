@@ -69,13 +69,14 @@
 
         <div style="padding: 0px 20px">
             <div style="display: grid; grid-template-columns: auto 50px 50px;">
-                <h1>Menükarte <a name="update-inventory">(<i class="fas fa-sync"></i> aktualisieren)</a></h1>
+                <h1>Warenangebot <a name="update-inventory">(<i class="fas fa-sync"></i> aktualisieren)</a></h1>
                 <h1><a name="toggle-show-entry" data-entry-id="all" data-show="true"><i class="far fa-eye"></i></a></h1>
                 <h1><a name="toggle-show-entry" data-entry-id="all" data-show="false"><i
                         class="far fa-eye-slash"></i></a></h1>
             </div>
             <div style="display: grid; grid-template-columns: auto 100px 100px 100px;">
                 <div>
+
                     <label><b>Name des Etablissements:
                         <input style="font-size: 1.5em"
                                name="establishment"
@@ -110,13 +111,13 @@
 
                 <div>
                     {{#if locked}}
-                    <button disabled style="background-color: red; color: white; font-weight: bold">Sicht gesperrt
-                    </button>
-                    <button name="unlock-innkeeper" style="background-color: lightgreen">jetzt freigeben</button>
+                    <div style="background-color: red; text-align: left">
+                        <button style="width: 48px" name="unlock-innkeeper"><i class="fas fa-lock"></i></i></button>
+                    </div>
                     {{else}}
-                    <button disabled style="background-color: green; color: black; font-weight: bold">Sicht frei
-                    </button>
-                    <button name="lock-innkeeper" style="background-color: salmon">jetzt sperren</button>
+                    <div style="background-color: green; text-align: right">
+                        <button style="width: 48px" name="lock-innkeeper"><i class="fas fa-lock-open"></i></i></button>
+                    </div>
                     {{/if}}
                 </div>
             </div>
