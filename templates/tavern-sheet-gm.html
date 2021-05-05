@@ -1,9 +1,28 @@
 <form class="dsa5-merchants-taverns">
-    <div style="display: grid; grid-template-columns: 250px auto 250px;">
+    <div style="display: grid; grid-template-columns: 250px auto {{#if isTavern}}250px{{/if}};">
 
         <div>
-            <h1>Rolltables</h1>
+            <h1>Vorlage:
+                <select name="template" style="background-color: lightblue; float: right">
+                    {{#select currentTemplateId}}
+                    <option>-- Template wählen</option>
+                    {{#each templates as |template id|}}
+                    <option value="{{id}}">{{template.name}}</option>
+                    {{/each}}
+                    {{/select}}
+
+                </select>
+
+            </h1>
+
+
             <button name="add-category">Kategorie hinzufügen</button>
+
+            <div>
+                <label>Taverne: <input name="is-tavern" {{#if isTavern}}checked="checked" {{/if}} type="checkbox"/>
+                </label>
+            </div>
+
 
             {{#each roleTables as |category id|}}
             <hr/>
@@ -69,31 +88,38 @@
 
         <div style="padding: 0px 20px">
             <div style="display: grid; grid-template-columns: auto 50px 50px;">
-                <h1>Warenangebot <a name="update-inventory">(<i class="fas fa-sync"></i> aktualisieren)</a></h1>
+                <h1>
+                    <button name="update-inventory" style="background-color: darkblue; color: white; width: 48px">
+                        <i class="fas fa-dice"></i>
+                    </button>
+                    Warenangebot
+                </h1>
                 <h1><a name="toggle-show-entry" data-entry-id="all" data-show="true"><i class="far fa-eye"></i></a></h1>
                 <h1><a name="toggle-show-entry" data-entry-id="all" data-show="false"><i
                         class="far fa-eye-slash"></i></a></h1>
             </div>
-            <div style="display: grid; grid-template-columns: auto 100px 100px 100px;">
-                <div>
 
-                    <label><b>Name des Etablissements:
-                        <input style="font-size: 1.5em"
-                               name="establishment"
-                               value="{{establishment}}"
-                        />
-                        <a name="refresh-name"><i class="fas fa-sync"></i> neu würfeln</a>
-                    </b>
-                    </label>
-                </div>
+            <div style="display: grid; grid-template-columns: auto  100px 100px;">
+
+                {{#if isTavern}}
                 <div>
-                    <label>Taverne: <input name="is-tavern" {{#if isTavern}}checked="checked" {{/if}} type="checkbox"/>
+                    <label>
+                        <button style="background-color: darkblue; color: white; width: 48px"
+                                name="refresh-name"><i class="fas fa-dice"></i></button>
+                        <input style="font-size: 1.5em; width: 300px"
+                               name="establishment" value="{{establishment}}"/>
                     </label>
                 </div>
+                {{else}}
+                <div></div>
+                {{/if}}
+                <!--isTavern-->
+
+
                 <div>
                     <select name="quality" style="width: 95px">
                         {{#select qualityOption}}
-                        <option>-- auswählen</option>
+                        <option>-- Qualität auswählen</option>
                         {{#each qualityOptions}}
                         <option value="{{key}}">{{name}}</option>
                         {{/each}}
@@ -101,7 +127,7 @@
                     </select>
                     <select name="quality" style="width: 95px">
                         {{#select qualityOption}}
-                        <option>-- auswählen</option>
+                        <option>-- Preis auswählen</option>
                         {{#each priceOptions}}
                         <option value="{{key}}">{{name}}</option>
                         {{/each}}
@@ -120,12 +146,20 @@
                     </div>
                     {{/if}}
                 </div>
+
+
             </div>
 
 
             <section class="categories">
                 {{#each tradeOffer}}
-                <h2>{{name}}</h2>
+                <h2>
+                    <button name="update-inventory" data-category-id=""
+                            style="background-color: darkblue; color: white; width: 48px">
+                        <i class="fas fa-dice"></i>
+                    </button>
+                    {{name}}
+                </h2>
                 {{#each index}}
                 <div class="entry" style="display: grid; grid-template-columns: auto 100px 100px;"
                      onclick="$('div.description.{{_id}}').toggle();">
@@ -174,8 +208,13 @@
 
                 <div style="width: 200px; align-content: center; float: right">
                     <button name="show-order"><i class="fas fa-eye"></i> Nur zeigen</button>
+
+                    {{#if isTavern}}
                     <button name="serve-order"><i class="fas fa-concierge-bell"></i> Servieren und auf Deckel</button>
                     <button name="charge-order"><i class="fas fa-file-signature"></i> Auf Deckel</button>
+                    {{/if}}
+                    <!--isTavern-->
+
                     <button name="sell-order"><i class="fas fa-coins"></i> Jetzt verkaufen</button>
                 </div>
 
@@ -183,6 +222,7 @@
 
         </div>
 
+        {{#if isTavern}}
         <div>
             <h1>Aktueller Deckel <a name="clear-orders"><i class="fas fa-trash-alt"></i></a></h1>
             {{#if orderTotal}}
@@ -219,5 +259,7 @@
             <button name="checkout" data-payment="per-round" disabled>Runden einzeln berechnen</button>
             {{/if}}
         </div>
+        {{/if}}
+        <!--isTavern-->
 
 </form>

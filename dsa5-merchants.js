@@ -10,20 +10,25 @@ const calculateWeight = (rarity) => rarity * rarity
 const INITIAL_WEIGHT = calculateWeight(Math.floor(ROLLTABLE_WEIGHT_RARITY / 2))
 
 
+/*
+const maxQualityOption = 5
+const maxPriceOption = 5
+*/
+
 // todo tidy this up and make Q and P selectable independently
 const qualityOptions = [
-    {key: 'spelunke', name: "Q1", price: 0.75},
-    {key: 'taverne', name: "Q2", price: 1},
-    {key: 'herberge', name: "Q3", price: 1.25},
-    {key: 'hotel', name: "Q4", price: 1.5},
-    {key: 'best', name: "Q5", price: 2}
+    {key: '1', name: "Q1", price: 0.75},
+    {key: '2', name: "Q2", price: 1},
+    {key: '3', name: "Q3", price: 1.25},
+    {key: '4', name: "Q4", price: 1.5},
+    {key: '5', name: "Q5", price: 2}
 ]
 const priceOptions = [
-    {key: 'spelunke', name: "P1", price: 0.75},
-    {key: 'taverne', name: "P2", price: 1},
-    {key: 'herberge', name: "P3", price: 1.25},
-    {key: 'hotel', name: "P4", price: 1.5},
-    {key: 'best', name: "P5", price: 2}
+    {key: '1', name: "P1", price: 0.75},
+    {key: '2', name: "P2", price: 1},
+    {key: '3', name: "P3", price: 1.25},
+    {key: '4', name: "P4", price: 1.5},
+    {key: '5', name: "P5", price: 2}
 ]
 
 Hooks.once("init", () => {
@@ -39,8 +44,8 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         const options = super.defaultOptions;
         mergeObject(options, {
             classes: options.classes.concat(["dsa5", "actor", "npc-sheet", "merchant-sheet"]),
-            width: (game.user.isGM) ? 1600 : 400,
-            height: (game.user.isGM) ? 1000 : 700,
+            width: (game.user.isGM) ? 1200 : 400,
+            height: (game.user.isGM) ? 800 : 600,
         });
         return options;
     }
@@ -54,14 +59,11 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
     activateListeners(html) {
         super.activateListeners(html);
-        html.find("a[name='update-inventory']").click(event => this._updateInventory(event, html));
+        html.find("button[name='update-inventory']").click(event => this._updateInventory(event, html));
         html.find("button[name='toggle-show-entry']").click(event => this._toggleShowEntry(event, html));
         html.find("a[name='toggle-show-entry']").click(event => this._toggleShowEntry(event, html));
         html.find("button[name='take-order']").click(event => this._takeOrder(event, html));
-
-        html.find("a[name='refresh-name']").click(event => this._refreshName(event, html));
-
-
+        html.find("button[name='refresh-name']").click(event => this._refreshName(event, html));
         html.find("a[name='clear-order']").click(event => this._clearOrder(event, html));
         html.find("button[name='show-order']").click(event => this._showOrder(event, html));
         html.find("button[name='serve-order']").click(event => this._serveOrder(event, html));
@@ -83,6 +85,8 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         html.find("select[name='category-rolltable']").change(event => this._changeCategory(event, 'table'));
         html.find("select[name='quality']").change(event => this._changeQuality(event));
         html.find("select[name='buyers']").change(event => this._changeBuyers(event));
+        html.find("select[name='template']").change(event => this._selectTemplate(event));
+
 
         html.find("input[name='filter-location']").change(event => this._changeFilterLocation(event));
         html.find("input[name='library-keyword']").change(event => this._changeLibraryKeyword(event));
@@ -128,6 +132,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
         this.libraryOptions = ["meleeweapon", "armor", "equipment", "poison", "consumable", "rangeweapon"]
 
+        this.rollTableConfig = TavernSheetDSA5.getDefaultSettings().templates
 
         const data = super.getData();
         mergeObject(data, {
@@ -145,7 +150,8 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
             subTotal: this.subTotal,
             orderTotal: this.orderTotal,
             buyersCount: this.buyersCount,
-
+            templates: this.rollTableConfig,
+            currentTemplateId: this.currentTemplateId || 1,
             bill: this.bill,
         })
         return data;
@@ -173,7 +179,7 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
         let tradeOffer = []
         for (let table of this.roleTables) {
-            const [packName, tableId] = table.table.split(':')
+            const [packName, tableId] = table?.table.split(':')
             let rolltable
             if (!packName) {
                 return
@@ -398,7 +404,12 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
 
     _addCategory(event, html) {
         let roleTables = duplicate(this.roleTables);
-        roleTables.push({roll: {}, name: '', regionFilter: false, libraryKeyword: ''})
+        roleTables.push({
+            roll: {"1": "2d2", "2": "2d3", "3": "3d3", "4": "3d4", "5": "3d5"},
+            name: '',
+            regionFilter: false,
+            libraryKeyword: ''
+        })
         this.actor.setFlag(moduleName, 'roleTables', roleTables)
         this.roleTables = roleTables
         this.render()
@@ -513,6 +524,69 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         return `${rndArr(part1)} ${rndArr(part2)} ${rndArr(part3)}`
     }
 
+
+    static getDefaultSettings() {
+        return {
+            templates: [
+                {
+                    name: 'Taverne',
+                    isTavern: true,
+                    roleTables: [{
+                        "roll": {"1": "2d2", "2": "2d3", "3": "3d3", "4": "3d4", "5": "3d5"},
+                        "name": "Munition",
+                        "regionFilter": false,
+                        "libraryKeyword": "",
+                        "table": "dsa5-homebrew.rolltable-warenangebot:FYBOWOCqPlpPTERr"
+                    }, {
+                        "roll": {"1": "2d2", "2": "2d3", "3": "3d3", "4": "3d4", "5": "3d5"},
+                        "name": "Nahkampf Waffen",
+                        "regionFilter": false,
+                        "libraryKeyword": "",
+                        "table": "dsa5-homebrew.rolltable-warenangebot:KJnUxxwn6a3MhTPI"
+                    }, {
+                        "roll": {"1": "2d2", "2": "2d3", "3": "3d3", "4": "3d4", "5": "3d5"},
+                        "name": "Schilde",
+                        "regionFilter": false,
+                        "libraryKeyword": "",
+                        "table": "dsa5-homebrew.rolltable-warenangebot:8zlOVUBJEfoWrT9H"
+                    }, {
+                        "roll": {"1": "2d2", "2": "2d3", "3": "3d3", "4": "3d4", "5": "3d5"},
+                        "name": "Fernkampf Waffen",
+                        "regionFilter": false,
+                        "libraryKeyword": "",
+                        "table": "libraryItems:rangeweapon"
+                    }]
+
+                },
+                {
+                    name: 'Waffenschmied',
+                    isTavern: false,
+                    roleTables: []
+                },
+                {
+                    name: 'Bäckerei',
+                    isTavern: false,
+                    roleTables: []
+                },
+                {
+                    name: 'Gemischtwaren',
+                    isTavern: false,
+                    roleTables: []
+                },
+                {
+                    name: 'Schneider',
+                    isTavern: false,
+                    roleTables: []
+                },
+                {
+                    name: 'Hufschmied',
+                    isTavern: false,
+                    roleTables: []
+                },
+            ],
+        }
+    }
+
     _refreshName(event, html) {
         let name = TavernSheetDSA5.getRandomEstablishmentName()
         this.actor.setFlag(moduleName, 'establishment', name)
@@ -522,44 +596,31 @@ export default class TavernSheetDSA5 extends ActorSheetdsa5NPC {
         this.actor.setFlag(moduleName, 'is-tavern', event.currentTarget.checked)
     }
 
+    async _selectTemplate(event) {
+        this.currentTemplateId = $(event.currentTarget)[0].value;
+        let isTavern = duplicate(this.rollTableConfig[this.currentTemplateId].isTavern);
+        this.actor.setFlag(moduleName, 'is-tavern', isTavern)
+            .then(() => {
+                let roleTables = duplicate(this.rollTableConfig[this.currentTemplateId].roleTables);
+                this.actor.setFlag(moduleName, 'roleTables', roleTables)
+            })
+    }
 }
 
 
-function locationMatch(current, match) {
-
+function checkAvailability(currentLocation, availability, item) {
     // restructure the parameters for later use
-    let regions = []
-    let biomes = []
-    for (let rarityKey in match) {
-        let weight = calculateWeight(parseInt(rarityKey.substr(-1)))
-        if (match[rarityKey].biome)
-            biomes.push({weight, key: match[rarityKey].biome})
-        if (match[rarityKey].region)
-            regions.push({weight, key: match[rarityKey].region})
-    }
-    const availability = {regions, biomes}
-    const currentBiomeKey = current.biome?.key
-    const currentRegionKeys = current.region?.reduce((accumulator, currentValue) => {
+    const currentBiomeKey = currentLocation.biome?.key
+    const currentRegionKeys = currentLocation.region?.reduce((accumulator, currentValue) => {
         return accumulator.concat(currentValue.index.map(i => i.key))
     }, []) || []
-
-
-    // the biome is about the max weight
-    let maxWeight = calculateWeight(ROLLTABLE_WEIGHT_RARITY)
-    for (let biome of availability.biomes) {
-        if (biome.key === currentBiomeKey)
-            maxWeight = biome.weight
-    }
-
-    // check for each region key as extracted from the string and update weight if higher
-    let weight = 0
-    for (let region of availability.regions) {
-        for (let key of region.key.value.split(','))
-            if ((key === 'sonst' || currentRegionKeys.includes(key)) && region.weight > weight)
-                weight = region.weight
-    }
-
-    const result = Math.min(weight, maxWeight)
+    const generalAvailability = availability.general || 3
+    const regionAvailability = Math.max(availability.regions?.filter(e => {
+        return currentRegionKeys.includes(e[0])
+    }).map(e => e[1]))
+    let biome = availability.biomes?.find(e => currentBiomeKey === e[0]) || ['fallback', 5]
+    const biomeAvailability = biome[1]
+    const result = Math.max(generalAvailability, Math.min(regionAvailability, biomeAvailability))
     return result
 }
 
@@ -645,11 +706,10 @@ export async function getFilteredWeightedRolltable({packName, tableId, libraryCa
 
         // we filter by location and we know the current location
         if (filterLocation && currentLocation) {
-            // no location assigned to this item, so we assume its available in general
-            if (getItemData(item).data?.location) {
-                weight = locationMatch(currentLocation, getItemData(item).data.location)
+            // no availability assigned to this item, so we assume its available in general
+            if (getItemData(item).data?.availability) {
+                weight = checkAvailability(currentLocation, getItemData(item).data.availability, item)
             }
-
             // item is not available here
             if (!weight || weight < 1)
                 continue
